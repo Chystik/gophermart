@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func NewRouter(handler *chi.Mux, s usecase.GophermartInteractior, JWTkey []byte, l logger.AppLogger) {
+func NewRouter(handler *chi.Mux, ui usecase.UserInteractor, oi usecase.OrderInteractor, JWTkey []byte, l logger.AppLogger) {
 	// Options
 	handler.Use(md.MidLogger(l).WithLogging)
 	//handler.Use(md.GzipMiddleware)
@@ -17,7 +17,52 @@ func NewRouter(handler *chi.Mux, s usecase.GophermartInteractior, JWTkey []byte,
 	handler.Use(middleware.Recoverer)
 
 	// Routes
-	//{
-	newGophermartRoutes(handler, s, JWTkey, l)
-	//}
+	ur := newUserRoutes(ui, JWTkey, l)
+	or := newOrderRoutes(oi, l)
+
+	handler.Route("/api/user", func(r chi.Router) {
+		// Public Routes
+		r.Group(func(r chi.Router) {
+			r.Post("/register", ur.register)
+			r.Post("/login", ur.login)
+		})
+
+		// Private Routes
+		// Require Authentication
+		r.Group(func(r chi.Router) {
+			r.Use(md.Authorization)
+			r.Route("/orders", func(r chi.Router) {
+				r.Post("/", or.uploadOrders)
+				r.Get("/", or.downloadOrders)
+			})
+			r.Route("/balance", func(r chi.Router) {
+				r.Get("/", ur.getBalance)
+				r.Post("/withdraw", ur.withdraw)
+			})
+			r.Get("/withdrawals", ur.getWithdrawals)
+		})
+	})
 }
+
+/* r.Route("/api/user", func(r chi.Router) {
+	// Public Routes
+	r.Group(func(r chi.Router) {
+		r.Post("/register", h.Register)
+		r.Post("/login", h.Login)
+	})
+
+	// Private Routes
+	// Require Authentication
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.Authorization)
+		r.Route("/orders", func(r chi.Router) {
+			r.Post("/", h.UploadOrders)
+			r.Get("/", h.DownloadOrders)
+		})
+		r.Route("/balance", func(r chi.Router) {
+			r.Get("/", h.GetBalance)
+			r.Post("/withdraw", h.Withdraw)
+		})
+		r.Get("/withdrawals", h.GetWithdrawals)
+	})
+}) */

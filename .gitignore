@@ -25,3 +25,6 @@ vendor/
 # test binaries
 statictest
 gophermarttest
+
+# logs
+*.log

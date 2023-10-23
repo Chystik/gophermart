@@ -8,7 +8,7 @@ create table if not exists praktikum.user (
 );
 
 create table if not exists praktikum.order (
-    number serial primary key not null unique,
+    number bigint primary key not null unique,
     user_id varchar(50) references praktikum.user(login) on delete cascade not null,
     status varchar(50) not null,
     uploaded_at date not null,
@@ -17,7 +17,7 @@ create table if not exists praktikum.order (
 
 create table if not exists praktikum.withdrawal (
     id serial primary key not null unique,
-    order_id serial references praktikum.order(number) on delete cascade not null,
+    order_id bigint references praktikum.order(number) on delete cascade not null,
     sum double precision not null,
     processed_at date not null
 );

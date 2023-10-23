@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	ErrNotFound = errors.New("not found in the repository")
-	ErrExists   = errors.New("login already exists in the repository")
+	ErrNotFound = errors.New("object not found")
+	ErrExists   = errors.New("object already exists in the repository")
 )
 
 type userRepository struct {
@@ -25,12 +25,6 @@ func NewUserRepository(db *postgres.PgClient) *userRepository {
 }
 
 func (ur *userRepository) Create(ctx context.Context, user models.User) error {
-	/* u, err := fromDomainUser(user)
-
-	if err != nil {
-		return err
-	} */
-
 	query := `
 			INSERT INTO	praktikum.user (login, password, balance, withdrawn)
 			VALUES ($1, $2, $3, $4)`

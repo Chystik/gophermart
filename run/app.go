@@ -36,7 +36,7 @@ const (
 func App(cfg *config.App, quit chan os.Signal) {
 
 	// Logger
-	logger, err := logger.Initialize(defaultLogLevel)
+	logger, err := logger.Initialize(defaultLogLevel, "app.log")
 	if err != nil {
 		panic(err)
 	}
@@ -65,11 +65,12 @@ func App(cfg *config.App, quit chan os.Signal) {
 	orderRepo := repository.NewOrderRepository(pgClient)
 
 	// Interactor
-	gophermartInteractor := usecase.NewGophermartInteractor(userRepo, orderRepo)
+	userInteractor := usecase.NewUserInteractor(userRepo)
+	orderInteractor := usecase.NewOrderInteractor(orderRepo)
 
 	// Router
 	handler := chi.NewRouter()
-	restapihandlers.NewRouter(handler, gophermartInteractor, cfg.JWTkey, logger)
+	restapihandlers.NewRouter(handler, userInteractor, orderInteractor, cfg.JWTkey, logger)
 
 	// HTTP client
 

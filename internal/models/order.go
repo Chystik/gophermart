@@ -3,7 +3,7 @@ package models
 import "time"
 
 type Order struct {
-	Number     int       `json:"number" db:"number"`
+	Number     string    `json:"number" db:"number"`
 	User       string    `db:"user_id"`
 	Status     string    `json:"status" db:"status"`
 	Accrual    float64   `json:"accrual,omitempty" db:"accrual,omitempty"`
