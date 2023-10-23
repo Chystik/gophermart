@@ -25,17 +25,17 @@ func NewUserRepository(db *postgres.PgClient) *userRepository {
 }
 
 func (ur *userRepository) Create(ctx context.Context, user models.User) error {
-	u, err := fromDomainUser(user)
+	/* u, err := fromDomainUser(user)
 
 	if err != nil {
 		return err
-	}
+	} */
 
 	query := `
 			INSERT INTO	praktikum.user (login, password, balance, withdrawn)
 			VALUES ($1, $2, $3, $4)`
 
-	_, err = ur.ExecContext(ctx, query, u.Login, u.Password, u.Balance, u.Withdrawn)
+	_, err := ur.ExecContext(ctx, query, user.Login, user.Password, user.Balance, user.Withdrawn)
 	if err != nil {
 		pgErr, ok := err.(*pgconn.PgError)
 		if !ok {

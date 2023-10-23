@@ -58,18 +58,22 @@ func newGophermartRoutes(r *chi.Mux, s usecase.GophermartInteractior, JWTkey []b
 }
 
 func (h *gophermartRoutes) Register(w http.ResponseWriter, r *http.Request) {
-	var creds credentials
+	//var creds credentials
+	var user models.User
 	var ctx = context.Background()
 	var err error
 
-	err = json.NewDecoder(r.Body).Decode(&creds)
+	err = json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		errorJSON(w, err, http.StatusBadRequest, h.logger)
 		return
 	}
 
+	// Hash user password
+	user.SetPassword()
+
 	// Create user
-	err = h.gophermartInteractor.RegisterUser(ctx, toDomainUser(creds))
+	err = h.gophermartInteractor.RegisterUser(ctx, user)
 	if err != nil {
 		// Login conflict
 		if err == repository.ErrExists {
@@ -82,27 +86,28 @@ func (h *gophermartRoutes) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Authorize user
-	h.authorize(w, creds)
+	h.authorize(w, user)
 }
 
 func (h *gophermartRoutes) Login(w http.ResponseWriter, r *http.Request) {
-	var creds credentials
+	//var creds credentials
+	var user models.User
 	var ctx = context.Background()
 	var err error
 
-	err = json.NewDecoder(r.Body).Decode(&creds)
+	err = json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		errorJSON(w, err, http.StatusBadRequest, h.logger)
 		return
 	}
 
 	// Verify password
-	err = h.gophermartInteractor.AuthenticateUser(ctx, toDomainUser(creds))
+	err = h.gophermartInteractor.AuthenticateUser(ctx, user)
 	if err != nil {
 		if err == repository.ErrNotFound { // Not found
 			errorJSON(w, err, http.StatusUnauthorized, h.logger)
 			return
-		} else if err == usecase.ErrWrongCreds { // Wrong password
+		} else if err == models.ErrWrongCreds { // Wrong password
 			errorJSON(w, err, http.StatusUnauthorized, h.logger)
 			return
 		}
@@ -111,11 +116,11 @@ func (h *gophermartRoutes) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Authorize user
-	h.authorize(w, creds)
+	h.authorize(w, user)
 }
 
 func (h *gophermartRoutes) UploadOrders(w http.ResponseWriter, r *http.Request) {
-	var order order
+	var order models.Order
 	var ctx = context.Background()
 	var err error
 
@@ -125,10 +130,14 @@ func (h *gophermartRoutes) UploadOrders(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	claims, _ := r.Context().Value("props").(models.AuthClaims)
+	claims, ok := r.Context().Value("props").(models.AuthClaims)
+	if !ok {
+		errorJSON(w, err, http.StatusUnauthorized, h.logger)
+		return
+	}
 	order.User = claims.Login
 
-	err = h.gophermartInteractor.CreateOrder(ctx, toDomainOrder(order))
+	err = h.gophermartInteractor.CreateOrder(ctx, order)
 	if err != nil {
 		errorJSON(w, err, http.StatusBadRequest, h.logger)
 		return
@@ -151,12 +160,12 @@ func (h *gophermartRoutes) GetWithdrawals(w http.ResponseWriter, r *http.Request
 
 }
 
-func (h *gophermartRoutes) authorize(w http.ResponseWriter, creds credentials) {
+func (h *gophermartRoutes) authorize(w http.ResponseWriter, user models.User) {
 	expirationTime := time.Now().Add(tokenExpiration)
 
 	// Create the JWT claims, which includes the username and expiry time
 	claims := &models.AuthClaims{
-		Login: creds.Login,
+		Login: user.Login,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},

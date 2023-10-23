@@ -3,9 +3,9 @@ package models
 import "time"
 
 type Order struct {
-	Number     int
-	User       string
-	Status     string
-	Accrual    float64
-	UploadedAt time.Time
+	Number     int       `json:"number" db:"number"`
+	User       string    `db:"user_id"`
+	Status     string    `json:"status" db:"status"`
+	Accrual    float64   `json:"accrual,omitempty" db:"accrual,omitempty"`
+	UploadedAt time.Time `json:"uploaded_at" db:"uploaded_at"`
 }

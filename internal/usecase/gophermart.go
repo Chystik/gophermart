@@ -2,15 +2,8 @@ package usecase
 
 import (
 	"context"
-	"errors"
 
 	"github.com/Chystik/gophermart/internal/models"
-
-	"golang.org/x/crypto/bcrypt"
-)
-
-var (
-	ErrWrongCreds = errors.New("mismatch login or password")
 )
 
 type gophermartInteractor struct {
@@ -35,15 +28,7 @@ func (gm *gophermartInteractor) AuthenticateUser(ctx context.Context, user model
 		return err
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(actual.Password), []byte(user.Password))
-	if err != nil {
-		if err == bcrypt.ErrMismatchedHashAndPassword {
-			return ErrWrongCreds
-		}
-		return err
-	}
-
-	return nil
+	return user.Authenticate(actual)
 }
 
 func (gm *gophermartInteractor) GetUser(ctx context.Context, user models.User) (models.User, error) {

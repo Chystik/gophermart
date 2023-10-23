@@ -18,13 +18,11 @@ func NewOrderRepository(db *postgres.PgClient) *orderRepository {
 }
 
 func (or *orderRepository) Create(ctx context.Context, order models.Order) error {
-	o := fromDomainOrder(order)
-
 	query := `
 			INSERT INTO praktikum.order (number, status, accrual, uploaded_at)
 			VALUES ($1, $2, $3, $4)`
 
-	_, err := or.ExecContext(ctx, query, o.Number, o.Status, o.Accrual, o.UploadedAt)
+	_, err := or.ExecContext(ctx, query, order.Number, order.Status, order.Accrual, order.UploadedAt)
 	if err != nil {
 		pgErr, ok := err.(*pgconn.PgError)
 		if !ok {
@@ -39,7 +37,7 @@ func (or *orderRepository) Create(ctx context.Context, order models.Order) error
 }
 
 func (or *orderRepository) GetList(ctx context.Context) ([]models.Order, error) {
-	var orders []dsOrder
+	var orders []models.Order
 
 	query := `
 			SELECT number, status, accrual, uploaded_at
@@ -50,5 +48,5 @@ func (or *orderRepository) GetList(ctx context.Context) ([]models.Order, error) 
 		return nil, err
 	}
 
-	return toDomainOrders(orders), nil
+	return orders, nil
 }
