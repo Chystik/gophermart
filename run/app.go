@@ -11,7 +11,9 @@ import (
 	"github.com/Chystik/gophermart/config"
 	restapihandlers "github.com/Chystik/gophermart/internal/controller/rest_api_handlers"
 	"github.com/Chystik/gophermart/internal/infrastructure/repository"
+	"github.com/Chystik/gophermart/internal/infrastructure/webapi"
 	"github.com/Chystik/gophermart/internal/usecase"
+	"github.com/Chystik/gophermart/pkg/httpclient"
 	"github.com/Chystik/gophermart/pkg/httpserver"
 	"github.com/Chystik/gophermart/pkg/logger"
 	"github.com/Chystik/gophermart/pkg/postgres"
@@ -60,19 +62,22 @@ func App(cfg *config.App, quit chan os.Signal) {
 		logger.Fatal(err.Error())
 	}
 
+	// HTTP client
+	httpClient := httpclient.NewClient(httpclient.Timeout(20 * time.Second))
+	accrualWebAPI := webapi.NewAccrualWebAPI(httpClient, webapi.Address(cfg.AccrualAddress))
+	logger.Info(cfg.AccrualAddress)
+
 	// Repository
 	userRepo := repository.NewUserRepository(pgClient)
 	orderRepo := repository.NewOrderRepository(pgClient)
 
 	// Interactor
 	userInteractor := usecase.NewUserInteractor(userRepo)
-	orderInteractor := usecase.NewOrderInteractor(orderRepo)
+	orderInteractor := usecase.NewOrderInteractor(orderRepo, accrualWebAPI)
 
 	// Router
 	handler := chi.NewRouter()
 	restapihandlers.NewRouter(handler, userInteractor, orderInteractor, cfg.JWTkey, logger)
-
-	// HTTP client
 
 	// HTTP server
 	server := httpserver.NewServer(handler, httpserver.Address(cfg.Address))

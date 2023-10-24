@@ -9,9 +9,13 @@ const (
 	defaultTimeout = 20 * time.Second
 )
 
+type HTTPClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
 type Client struct {
 	client  *http.Client
-	timeout time.Time
+	timeout time.Duration
 }
 
 func NewClient(opts ...Options) *Client {
@@ -26,4 +30,8 @@ func NewClient(opts ...Options) *Client {
 	}
 
 	return client
+}
+
+func (c *Client) Do(req *http.Request) (*http.Response, error) {
+	return c.client.Do(req)
 }
