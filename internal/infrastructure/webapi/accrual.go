@@ -56,7 +56,7 @@ func (a *accrual) GetOrder(ctx context.Context, order models.Order) (models.Orde
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusNoContent {
 			order.Status = "NEW"
-			order.UploadedAt = time.Now()
+			order.UploadedAt = models.RFC3339Time{Time: time.Now()}
 			return order, nil
 		}
 		return order, fmt.Errorf(errBadStatusCode, resp.Status)

@@ -1,5 +1,5 @@
 SHELL = /bin/bash
-.PHONY: autotest dep test race lint gen cover statictest dev-up dev-down
+.PHONY: autotest dep test race lint gen cover statictest dev-up dev-down accrual
 
 dep:
 	go mod download
@@ -45,3 +45,6 @@ dev-up:
 
 dev-down:
 	docker-compose -f=docker-compose.dev.yml --env-file=.env.dev down --rmi local
+
+accrual:
+	./cmd/accrual/accrual_linux_amd64 -a=localhost:8787 -d="postgresql://postgres:postgres@localhost:5432/praktikum?sslmode=disable"

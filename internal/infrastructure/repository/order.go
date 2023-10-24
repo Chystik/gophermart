@@ -30,7 +30,7 @@ func (or *orderRepository) Create(ctx context.Context, order models.Order) error
 			VALUES ($1, $2, $3, $4, $5)
 			ON CONFLICT (number) DO NOTHING`
 
-	_, err := or.ExecContext(ctx, query, order.Number, order.User, order.Status, order.Accrual, order.UploadedAt)
+	_, err := or.ExecContext(ctx, query, order.Number, order.User, order.Status, order.Accrual, order.UploadedAt.Time)
 	if err != nil {
 		pgErr, ok := err.(*pgconn.PgError)
 		if !ok {

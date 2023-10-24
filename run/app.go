@@ -65,7 +65,6 @@ func App(cfg *config.App, quit chan os.Signal) {
 	// HTTP client
 	httpClient := httpclient.NewClient(httpclient.Timeout(20 * time.Second))
 	accrualWebAPI := webapi.NewAccrualWebAPI(httpClient, webapi.Address(cfg.AccrualAddress))
-	logger.Info(cfg.AccrualAddress)
 
 	// Repository
 	userRepo := repository.NewUserRepository(pgClient)

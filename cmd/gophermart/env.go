@@ -4,9 +4,9 @@ import (
 	"os"
 
 	"github.com/Chystik/gophermart/config"
-	"github.com/joho/godotenv"
 
 	"github.com/caarlos0/env"
+	"github.com/joho/godotenv"
 )
 
 func parseEnv(cfg *config.App, dotEnvFile string) error {
