@@ -63,13 +63,20 @@ func (or *orderRepository) Get(ctx context.Context, order models.Order) (models.
 
 func (or *orderRepository) GetAll(ctx context.Context) ([]models.Order, error) {
 	var orders []models.Order
+	var claimsKey models.ClaimsKey = "props"
+
+	claims, ok := ctx.Value(claimsKey).(*models.AuthClaims)
+	if !ok {
+		return orders, errors.New("bad login")
+	}
 
 	query := `
 			SELECT number, user_id, status, accrual, uploaded_at
 			FROM praktikum.order
+			WHERE user_id = $1
 			ORDER BY uploaded_at ASC`
 
-	err := or.SelectContext(ctx, &orders, query)
+	err := or.SelectContext(ctx, &orders, query, claims.Login)
 	if err != nil {
 		return nil, err
 	}

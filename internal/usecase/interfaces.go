@@ -17,7 +17,7 @@ type (
 
 	OrderInteractor interface {
 		Create(context.Context, models.Order) error
-		GetAll(context.Context) ([]models.Order, error)
+		GetAll(context.Context) ([]models.Order, error) //login models.User
 	}
 
 	UserRepository interface {

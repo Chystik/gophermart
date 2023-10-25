@@ -79,9 +79,7 @@ func (or *orderRoutes) uploadOrders(w http.ResponseWriter, r *http.Request) {
 }
 
 func (or *orderRoutes) downloadOrders(w http.ResponseWriter, r *http.Request) {
-	var ctx = context.Background()
-
-	orders, err := or.orderInteractor.GetAll(ctx)
+	orders, err := or.orderInteractor.GetAll(r.Context())
 	if err != nil {
 		errorJSON(w, err, http.StatusInternalServerError, or.logger)
 		return
