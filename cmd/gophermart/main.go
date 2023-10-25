@@ -16,7 +16,7 @@ const dotEnvFile string = ".env.dev"
 func main() {
 	cfg := config.NewAppConfig()
 
-	parseFlags(cfg)
+	//parseFlags(cfg)
 	fmt.Printf("FLAGS: %#v\n", cfg)
 	err := parseEnv(cfg, dotEnvFile)
 	if err != nil {

@@ -1,6 +1,6 @@
 package main
 
-import (
+/* import (
 	"flag"
 	"strings"
 
@@ -18,3 +18,4 @@ func parseFlags(cfg *config.App) {
 	cfg.Address = strings.TrimPrefix(addr, "http://")
 	cfg.AccrualAddress = strings.TrimPrefix(accr, "http://")
 }
+*/
