@@ -38,7 +38,6 @@ const (
 )
 
 func App(cfg *config.App, quit chan os.Signal) {
-
 	// Logger
 	logger, err := logger.Initialize(defaultLogLevel, "app.log")
 	if err != nil {
@@ -68,7 +67,7 @@ func App(cfg *config.App, quit chan os.Signal) {
 	httpClient := httpclient.NewClient(httpclient.Timeout(20 * time.Second))
 
 	// Accrual web API
-	accrualWebAPI := webapi.NewAccrualWebAPI(httpClient, webapi.Scheme(accrualAddrScheme), webapi.Address(cfg.AccrualAddress))
+	accrualWebAPI := webapi.NewAccrualWebAPI(httpClient, webapi.Address(cfg.AccrualAddress))
 
 	// Repository
 	userRepo := repository.NewUserRepository(pgClient)

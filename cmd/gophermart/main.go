@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,7 +18,7 @@ func main() {
 	parseFlags(cfg)
 	err := parseEnv(cfg, dotEnvFile)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	// Graceful shutdown setup
