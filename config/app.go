@@ -9,9 +9,6 @@ type App struct {
 
 func NewAppConfig() *App {
 	return &App{
-		Address:        ":8080",
-		DBuri:          "",
-		AccrualAddress: "",
-		JWTkey:         []byte("my_secret_key"),
+		JWTkey: []byte("my_secret_key"),
 	}
 }
