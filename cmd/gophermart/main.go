@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -11,18 +10,14 @@ import (
 	"github.com/Chystik/gophermart/run"
 )
 
-const dotEnvFile string = ".env.dev"
-
 func main() {
 	cfg := config.NewAppConfig()
 
-	//parseFlags(cfg)
-	fmt.Printf("FLAGS: %#v\n", cfg)
-	err := parseEnv(cfg, dotEnvFile)
+	parseFlags(cfg)
+	err := parseEnv(cfg)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Printf("ENV: %#v\n", cfg)
 
 	// Graceful shutdown setup
 	quit := make(chan os.Signal, 1)

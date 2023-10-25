@@ -9,11 +9,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func parseEnv(cfg *config.App, dotEnvFile string) error {
-	if _, err := os.Stat(dotEnvFile); err == nil {
-		errLoad := godotenv.Load(dotEnvFile)
-		if errLoad != nil {
-			return errLoad
+func parseEnv(cfg *config.App) error {
+	if osEnv := os.Getenv("ENVIRONMENT"); osEnv == "dev" {
+		err := godotenv.Load(".env.dev")
+		if err != nil {
+			return err
 		}
 	}
 	return env.Parse(cfg)
