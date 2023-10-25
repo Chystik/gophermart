@@ -14,11 +14,11 @@ const dotEnvFile string = ".env.dev"
 func main() {
 	cfg := config.NewAppConfig()
 
-	parseFlags(cfg)
 	err := parseEnv(cfg, dotEnvFile)
 	if err != nil {
 		panic(err)
 	}
+	parseFlags(cfg)
 
 	// Graceful shutdown setup
 	quit := make(chan os.Signal, 1)
