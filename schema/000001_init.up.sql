@@ -17,7 +17,7 @@ create table if not exists praktikum.order (
 
 create table if not exists praktikum.withdrawal (
     id serial primary key not null unique,
-    order_id bigint references praktikum.order(number) on delete cascade not null,
+    order_id bigint not null,
     sum double precision not null,
     processed_at timestamp not null
 );

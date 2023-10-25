@@ -17,6 +17,12 @@ type User struct {
 	Withdrawn float64 `db:"withdrawn"`
 }
 
+type Withdrawal struct {
+	Order       string      `json:"order" db:"order_id"`
+	Sum         float64     `json:"sum" db:"sum"`
+	ProcessedAt RFC3339Time `json:"processed_at" db:"processed_at"`
+}
+
 // SetPassword hashes the user's password
 func (u *User) SetPassword() error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(u.Password), 8)

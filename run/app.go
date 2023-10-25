@@ -13,6 +13,7 @@ import (
 	"github.com/Chystik/gophermart/internal/infrastructure/repository"
 	"github.com/Chystik/gophermart/internal/infrastructure/webapi"
 	"github.com/Chystik/gophermart/internal/usecase"
+	"github.com/Chystik/gophermart/internal/usecase/syncer"
 	"github.com/Chystik/gophermart/pkg/httpclient"
 	"github.com/Chystik/gophermart/pkg/httpserver"
 	"github.com/Chystik/gophermart/pkg/logger"
@@ -25,14 +26,14 @@ const (
 	defaultLogLevel        = "info"
 	defaultShutdownTimeout = 5 * time.Second
 
-	logHTTPServerStart             = "HTTP server started on port: %s"
-	logHTTPServerStop              = "Stopped serving new connections"
-	logSignalInterrupt             = "Interrupt signal. Shutdown"
-	logGracefulHTTPServerShutdown  = "Graceful shutdown of HTTP Server complete."
-	logStorageSyncStart            = "data syncronization to file %s with interval %v started"
-	logStorageSyncStop             = "Stopped saving storage data to a file"
-	logGracefulStorageSyncShutdown = "Graceful shutdown of storage sync complete."
-	logDBDisconnect                = "Graceful close connection for DB client complete."
+	logHTTPServerStart            = "HTTP server started on port: %s"
+	logHTTPServerStop             = "Stopped serving new connections"
+	logSignalInterrupt            = "Interrupt signal. Shutdown"
+	logGracefulHTTPServerShutdown = "Graceful shutdown of HTTP Server complete."
+	logSyncStart                  = "data syncronization with accrual service %s started"
+	logSyncStop                   = "Stopped syncronization with accrual service"
+	logGracefulSyncShutdown       = "Graceful shutdown of accrual sync complete."
+	logDBDisconnect               = "Graceful close connection for DB client complete."
 )
 
 func App(cfg *config.App, quit chan os.Signal) {
@@ -64,15 +65,21 @@ func App(cfg *config.App, quit chan os.Signal) {
 
 	// HTTP client
 	httpClient := httpclient.NewClient(httpclient.Timeout(20 * time.Second))
+
+	// Accrual web API
 	accrualWebAPI := webapi.NewAccrualWebAPI(httpClient, webapi.Address(cfg.AccrualAddress))
 
 	// Repository
 	userRepo := repository.NewUserRepository(pgClient)
 	orderRepo := repository.NewOrderRepository(pgClient)
+	withdrawalRepo := repository.NewWithdrawalRepository(pgClient)
 
 	// Interactor
-	userInteractor := usecase.NewUserInteractor(userRepo)
-	orderInteractor := usecase.NewOrderInteractor(orderRepo, accrualWebAPI)
+	userInteractor := usecase.NewUserInteractor(userRepo, withdrawalRepo)
+	orderInteractor := usecase.NewOrderInteractor(orderRepo)
+
+	// Syncer
+	syncer := syncer.NewSyncer(userRepo, orderRepo, accrualWebAPI, logger)
 
 	// Router
 	handler := chi.NewRouter()
@@ -86,6 +93,15 @@ func App(cfg *config.App, quit chan os.Signal) {
 			logger.Fatal(err.Error())
 		}
 		logger.Info(logHTTPServerStop)
+	}()
+
+	// Start syncer
+	go func() {
+		logger.Info(fmt.Sprintf(logSyncStart, cfg.AccrualAddress))
+		if err := syncer.Run(); err != nil {
+			logger.Fatal(err.Error())
+		}
+		logger.Info(logSyncStop)
 	}()
 
 	// Wait signal
@@ -105,4 +121,10 @@ func App(cfg *config.App, quit chan os.Signal) {
 		logger.Fatal(err.Error())
 	}
 	logger.Info(logDBDisconnect)
+
+	// Graceful shutdown syncer
+	if err := syncer.Shutdown(ctxShutdown); err != nil {
+		logger.Fatal(err.Error())
+	}
+	logger.Info(logGracefulSyncShutdown)
 }

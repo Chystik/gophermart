@@ -3,17 +3,46 @@ package webapi
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
-	"time"
+	"strconv"
 
 	"github.com/Chystik/gophermart/internal/models"
 	"github.com/Chystik/gophermart/pkg/httpclient"
 )
 
 var (
-	errBadStatusCode = "resp status code: %s"
+	errBadStatusCode = errors.New("bad status code")
 )
+
+type AccrualError struct {
+	StatusCode int
+	Err        error
+}
+
+func (r *AccrualError) Error() string {
+	return r.Err.Error()
+}
+
+func (r *AccrualError) ToManyRequests() bool {
+	return r.StatusCode == http.StatusTooManyRequests // 503
+}
+
+// GetRateLimit returns allowed requests per minute
+func (r *AccrualError) GetRateLimit() (int, error) {
+	var n []byte
+	str := r.Err.Error()
+
+	for i := range str {
+		if byte(47) < str[i] && str[i] < byte(59) {
+			n = append(n, str[i])
+		}
+	}
+
+	return strconv.Atoi(string(n))
+}
 
 type respBody struct {
 	Number  string  `json:"order"`
@@ -54,12 +83,24 @@ func (a *accrual) GetOrder(ctx context.Context, order models.Order) (models.Orde
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode == http.StatusNoContent {
-			order.Status = "NEW"
-			order.UploadedAt = models.RFC3339Time{Time: time.Now()}
+		switch resp.StatusCode {
+		case http.StatusNoContent:
 			return order, nil
+		case http.StatusTooManyRequests:
+			rl, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return order, err
+			}
+			return order, &AccrualError{
+				StatusCode: resp.StatusCode,
+				Err:        errors.New(string(rl)),
+			}
+		default:
+			return order, &AccrualError{
+				StatusCode: resp.StatusCode,
+				Err:        errBadStatusCode,
+			}
 		}
-		return order, fmt.Errorf(errBadStatusCode, resp.Status)
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&rBody)

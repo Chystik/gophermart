@@ -3,7 +3,9 @@ package restapihandlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/Chystik/gophermart/internal/infrastructure/repository"
@@ -14,8 +16,13 @@ import (
 )
 
 const (
-	key             models.ClaimsKey = "props"
+	cookieName                       = "token"
+	claimsKey       models.ClaimsKey = "props"
 	tokenExpiration                  = 5 * time.Minute
+)
+
+var (
+	errWrongAuthClaims = errors.New("wrong auth claims")
 )
 
 type userRoutes struct {
@@ -62,6 +69,7 @@ func (ur *userRoutes) register(w http.ResponseWriter, r *http.Request) {
 
 	// Authorize user
 	ur.authorize(w, user)
+	w.WriteHeader(http.StatusOK)
 }
 
 func (ur *userRoutes) login(w http.ResponseWriter, r *http.Request) {
@@ -92,18 +100,94 @@ func (ur *userRoutes) login(w http.ResponseWriter, r *http.Request) {
 
 	// Authorize user
 	ur.authorize(w, user)
+	w.WriteHeader(http.StatusOK)
 }
 
 func (ur *userRoutes) getBalance(w http.ResponseWriter, r *http.Request) {
+	var ctx = context.Background()
 
+	login, err := getUserLogin(r.Context())
+	if err != nil {
+		errorJSON(w, err, http.StatusUnauthorized, ur.logger)
+		return
+	}
+
+	user := models.User{
+		Login: login,
+	}
+
+	user, err = ur.userInteractor.Get(ctx, user)
+	if err != nil {
+		errorJSON(w, err, http.StatusInternalServerError, ur.logger)
+		return
+	}
+
+	balance := fromDomainBalance(user)
+
+	writeJSON(w, http.StatusOK, "application/json", balance, ur.logger)
 }
 
 func (ur *userRoutes) withdraw(w http.ResponseWriter, r *http.Request) {
+	var wth models.Withdrawal
+	var ctx = context.Background()
+	var order int
+	var err error
+	var login string
 
+	err = json.NewDecoder(r.Body).Decode(&wth)
+	if err != nil {
+		errorJSON(w, err, http.StatusUnprocessableEntity, ur.logger)
+		return
+	}
+
+	order, err = strconv.Atoi(wth.Order)
+	if err != nil {
+		errorJSON(w, errNotValidLuhn, http.StatusUnprocessableEntity, ur.logger)
+		return
+	}
+
+	// Validate order number
+	if !valid(order) {
+		errorJSON(w, errNotValidLuhn, http.StatusUnprocessableEntity, ur.logger)
+		return
+	}
+
+	login, err = getUserLogin(r.Context())
+	if err != nil {
+		errorJSON(w, errNotValidLuhn, http.StatusUnauthorized, ur.logger)
+		return
+	}
+
+	err = ur.userInteractor.Withdraw(ctx, wth, models.User{Login: login})
+	if err != nil {
+		var stat int
+		if err == usecase.ErrNotEnoughMoney {
+			stat = http.StatusPaymentRequired
+		} else {
+			stat = http.StatusInternalServerError
+		}
+		errorJSON(w, err, stat, ur.logger)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (ur *userRoutes) getWithdrawals(w http.ResponseWriter, r *http.Request) {
+	var ctx = context.Background()
 
+	wth, err := ur.userInteractor.GetWithdrawals(ctx)
+	if err != nil {
+		errorJSON(w, err, http.StatusInternalServerError, ur.logger)
+		return
+	}
+
+	if len(wth) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, "application/json", wth, ur.logger)
 }
 
 func (ur *userRoutes) authorize(w http.ResponseWriter, user models.User) {
@@ -128,8 +212,17 @@ func (ur *userRoutes) authorize(w http.ResponseWriter, user models.User) {
 
 	// Set cookie
 	http.SetCookie(w, &http.Cookie{
-		Name:    "token",
+		Name:    cookieName,
 		Value:   tokenStr,
 		Expires: expirationTime,
 	})
+}
+
+func getUserLogin(ctx context.Context) (string, error) {
+	claims, ok := ctx.Value(claimsKey).(*models.AuthClaims)
+	if !ok {
+		return "", errWrongAuthClaims
+	}
+
+	return claims.Login, nil
 }

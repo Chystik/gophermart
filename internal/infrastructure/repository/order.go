@@ -61,7 +61,7 @@ func (or *orderRepository) Get(ctx context.Context, order models.Order) (models.
 	return order, nil
 }
 
-func (or *orderRepository) GetList(ctx context.Context) ([]models.Order, error) {
+func (or *orderRepository) GetAll(ctx context.Context) ([]models.Order, error) {
 	var orders []models.Order
 
 	query := `
@@ -70,6 +70,36 @@ func (or *orderRepository) GetList(ctx context.Context) ([]models.Order, error) 
 			ORDER BY uploaded_at ASC`
 
 	err := or.SelectContext(ctx, &orders, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
+func (or *orderRepository) Update(ctx context.Context, order models.Order) error {
+	query := `
+			UPDATE praktikum.order 
+			SET status = $1, accrual = $2
+			WHERE number = $3`
+
+	_, err := or.ExecContext(ctx, query, order.Status, order.Accrual, order.Number)
+
+	return err
+}
+
+func (or *orderRepository) GetUnprocessed(ctx context.Context) ([]models.Order, error) {
+	var orders []models.Order
+
+	query := `
+			SELECT number, user_id, status, accrual, uploaded_at
+			FROM praktikum.order
+			WHERE status = $1
+			OR status = $2
+			OR status = $3
+			ORDER BY uploaded_at ASC`
+
+	err := or.SelectContext(ctx, &orders, query, "PROCESSING", "NEW", "REGISTERED")
 	if err != nil {
 		return nil, err
 	}

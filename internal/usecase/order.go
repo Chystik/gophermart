@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"time"
 
 	"github.com/Chystik/gophermart/internal/infrastructure/repository"
 	"github.com/Chystik/gophermart/internal/models"
@@ -9,25 +10,21 @@ import (
 
 type orderInteractor struct {
 	orderRepo OrderRepository
-	accrual   AccrualWebAPI
+	//accrual   AccrualWebAPI
 }
 
-func NewOrderInteractor(or OrderRepository, a AccrualWebAPI) *orderInteractor {
+func NewOrderInteractor(or OrderRepository) *orderInteractor {
 	return &orderInteractor{
 		orderRepo: or,
-		accrual:   a,
+		//accrual:   a,
 	}
 }
 
 func (oi *orderInteractor) Create(ctx context.Context, order models.Order) error {
 	var err error
 
-	// call webapi
-	order, err = oi.accrual.GetOrder(ctx, order)
-	if err != nil {
-		// TODO check status
-		return err
-	}
+	order.Status = "NEW"
+	order.UploadedAt = models.RFC3339Time{Time: time.Now()}
 
 	o, err := oi.orderRepo.Get(ctx, order)
 	if err != nil {
@@ -44,5 +41,5 @@ func (oi *orderInteractor) Create(ctx context.Context, order models.Order) error
 }
 
 func (oi *orderInteractor) GetAll(ctx context.Context) ([]models.Order, error) {
-	return oi.orderRepo.GetList(ctx)
+	return oi.orderRepo.GetAll(ctx)
 }
