@@ -25,6 +25,7 @@ import (
 const (
 	defaultLogLevel        = "info"
 	defaultShutdownTimeout = 5 * time.Second
+	accrualAddrScheme      = "http"
 
 	logHTTPServerStart            = "HTTP server started on port: %s"
 	logHTTPServerStop             = "Stopped serving new connections"
@@ -67,7 +68,7 @@ func App(cfg *config.App, quit chan os.Signal) {
 	httpClient := httpclient.NewClient(httpclient.Timeout(20 * time.Second))
 
 	// Accrual web API
-	accrualWebAPI := webapi.NewAccrualWebAPI(httpClient, webapi.Address(cfg.AccrualAddress))
+	accrualWebAPI := webapi.NewAccrualWebAPI(httpClient, webapi.Scheme(accrualAddrScheme), webapi.Address(cfg.AccrualAddress))
 
 	// Repository
 	userRepo := repository.NewUserRepository(pgClient)
