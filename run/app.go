@@ -44,8 +44,6 @@ func App(cfg *config.App, quit chan os.Signal) {
 		panic(err)
 	}
 
-	logger.Info(fmt.Sprintf("%#v", cfg))
-
 	// Postgres client
 	pgClient, err := postgres.NewPgClient(cfg.DBuri, logger)
 	if err != nil {

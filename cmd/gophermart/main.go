@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -16,10 +17,12 @@ func main() {
 	cfg := config.NewAppConfig()
 
 	parseFlags(cfg)
+	fmt.Printf("FLAGS: %#v\n", cfg)
 	err := parseEnv(cfg, dotEnvFile)
 	if err != nil {
 		log.Fatalln(err)
 	}
+	fmt.Printf("ENV: %#v\n", cfg)
 
 	// Graceful shutdown setup
 	quit := make(chan os.Signal, 1)
