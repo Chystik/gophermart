@@ -45,8 +45,8 @@ jobs:
 
       - name: Prepare binaries
         run: |
-          go build -buildvcs=false -o ./cmd/gophermart/gophermart ./cmd/gophermart
-          chmod +x ./cmd/accrual/accrual_linux_amd64
+          (cd cmd/gophermart && go build -buildvcs=false -o gophermart)
+          (cd cmd/accrual && chmod +x accrual_linux_amd64)
 
       - name: Test
         run: |
@@ -54,7 +54,7 @@ jobs:
             -test.v -test.run=^TestGophermart$ \
             -gophermart-binary-path=cmd/gophermart/gophermart \
             -gophermart-host=localhost \
-            -gophermart-port=8080 \
+            -gophermart-port=9145 \
             -gophermart-database-uri="postgresql://postgres:postgres@postgres/praktikum?sslmode=disable" \
             -accrual-binary-path=cmd/accrual/accrual_linux_amd64 \
             -accrual-host=localhost \
@@ -66,7 +66,7 @@ jobs:
         with:
           name: app-log
           path: app.log
-          retention-days: 1
+          retention-days: 5
 
       - name: Download app log file
         uses: actions/download-artifact@v3
