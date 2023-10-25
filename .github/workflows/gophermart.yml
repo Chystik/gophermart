@@ -45,8 +45,8 @@ jobs:
 
       - name: Prepare binaries
         run: |
-          (cd cmd/gophermart && go build -buildvcs=false -o gophermart)
-          (cd cmd/accrual && chmod +x accrual_linux_amd64)
+          go build -o ./cmd/gophermart/gophermart ./cmd/gophermart
+          chmod +x ./cmd/accrual/accrual_linux_amd64
 
       - name: Test
         run: |
@@ -66,7 +66,7 @@ jobs:
         with:
           name: app-log
           path: app.log
-          retention-days: 5
+          retention-days: 1
 
       - name: Download app log file
         uses: actions/download-artifact@v3
