@@ -63,13 +63,13 @@ func (ur *userRepository) Get(ctx context.Context, user models.User) (models.Use
 	return u, nil
 }
 
-func (or *userRepository) Update(ctx context.Context, user models.User) error {
+func (ur *userRepository) Update(ctx context.Context, user models.User) error {
 	query := `
 			UPDATE praktikum.user 
 			SET balance = $1, withdrawn = $2
 			WHERE login = $3`
 
-	_, err := or.ExecContext(ctx, query, user.Balance, user.Withdrawn, user.Login)
+	_, err := ur.ExecContext(ctx, query, user.Balance, user.Withdrawn, user.Login)
 
 	return err
 }

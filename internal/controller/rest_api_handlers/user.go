@@ -52,7 +52,11 @@ func (ur *userRoutes) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Hash user password
-	user.SetPassword()
+	err = user.SetPassword()
+	if err != nil {
+		errorJSON(w, err, http.StatusInternalServerError, ur.logger)
+		return
+	}
 
 	// Create user
 	err = ur.userInteractor.Register(ctx, user)
