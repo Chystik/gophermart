@@ -14,6 +14,7 @@ race:
 lint:
 	/home/user/go/bin/golangci-lint run
 
+accrual-port = $(shell ./random unused-port)
 gophermart-bin = ./cmd/gophermart/gophermart
 autotest:
 	go build -o $(gophermart-bin) ./cmd/gophermart
@@ -25,7 +26,7 @@ autotest:
     -gophermart-database-uri="postgresql://postgres:postgres@localhost:5432/praktikum?sslmode=disable" \
     -accrual-binary-path=./cmd/accrual/accrual_linux_amd64 \
     -accrual-host=localhost \
-    -accrual-port=8787 \
+    -accrual-port=$(accrual-port) \
     -accrual-database-uri="postgresql://postgres:postgres@localhost:5432/praktikum?sslmode=disable"
 	rm $(gophermart-bin)
 
