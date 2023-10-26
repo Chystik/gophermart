@@ -20,10 +20,9 @@ jobs:
         uses: robinraju/release-downloader@v1.8
         with:
           repository: Yandex-Practicum/go-autotests
-          tag: refactor
+          tag: "v0.10.1"
           fileName: statictest
           out-file-path: .tools
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup autotest binary
         run: |
