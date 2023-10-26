@@ -39,6 +39,10 @@ func NewPgClient(uri string, logger logger.AppLogger) (*PgClient, error) {
 		return nil, err
 	}
 
+	if cc.Port == 0 {
+		cc.Port = 5432
+	}
+
 	db, err := sqlx.Open("pgx", uri)
 	if err != nil {
 		return nil, err
