@@ -1,11 +1,9 @@
 package webapi
 
-import "fmt"
-
 type Options func(a *accrual)
 
-func Address(adr string, scheme string) Options {
+func Address(adr string) Options {
 	return func(a *accrual) {
-		a.url = fmt.Sprintf("%s://%s", scheme, adr)
+		a.url = adr
 	}
 }

@@ -13,11 +13,11 @@ import (
 func main() {
 	cfg := config.NewAppConfig()
 
-	parseFlags(cfg)
 	err := parseEnv(cfg)
 	if err != nil {
 		log.Fatalln(err)
 	}
+	parseFlags(cfg)
 
 	// channel for Graceful shutdown
 	quit := make(chan os.Signal, 1)
