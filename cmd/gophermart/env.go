@@ -4,17 +4,10 @@ import (
 	"os"
 
 	"github.com/Chystik/gophermart/config"
-
-	"github.com/caarlos0/env"
-	"github.com/joho/godotenv"
 )
 
-func parseEnv(cfg *config.App) error {
-	if osEnv := os.Getenv("ENVIRONMENT"); osEnv == "dev" {
-		err := godotenv.Load(".env.dev")
-		if err != nil {
-			return err
-		}
-	}
-	return env.Parse(cfg)
+func parseEnv(cfg *config.App) {
+	cfg.Address = config.Address(os.Getenv("RUN_ADDRESS"))
+	cfg.DBuri = config.DBuri(os.Getenv("DATABASE_URI"))
+	cfg.AccrualAddress = config.AccrualAddress(os.Getenv("ACCRUAL_SYSTEM_ADDRESS"))
 }

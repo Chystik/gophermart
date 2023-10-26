@@ -1,22 +1,27 @@
 package main
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/Chystik/gophermart/config"
 	"github.com/Chystik/gophermart/run"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	cfg := config.NewAppConfig()
 
-	err := parseEnv(cfg)
-	if err != nil {
-		log.Fatalln(err)
+	if osEnv := os.Getenv("ENVIRONMENT"); osEnv == "dev" {
+		err := godotenv.Load(".env.dev")
+		if err != nil {
+			panic(err)
+		}
 	}
+
+	parseEnv(cfg)
 	parseFlags(cfg)
 
 	// channel for Graceful shutdown

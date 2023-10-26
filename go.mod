@@ -3,7 +3,6 @@ module github.com/Chystik/gophermart
 go 1.20
 
 require (
-	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jmoiron/sqlx v1.3.5

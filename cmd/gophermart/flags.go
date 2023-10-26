@@ -7,7 +7,7 @@ import (
 )
 
 func parseFlags(cfg *config.App) {
-	// checking interface implementation
+	// Check interface implementation
 	_ = flag.Value(&cfg.Address)
 	_ = flag.Value(&cfg.DBuri)
 	_ = flag.Value(&cfg.AccrualAddress)
