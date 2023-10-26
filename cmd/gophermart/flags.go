@@ -1,20 +1,22 @@
 package main
 
-/* import (
+import (
 	"flag"
-	"strings"
 
 	"github.com/Chystik/gophermart/config"
 )
 
 func parseFlags(cfg *config.App) {
-	var addr, accr string
+	// checking interface implementation
+	_ = flag.Value(&cfg.Address)
+	_ = flag.Value(&cfg.DBuri)
+	_ = flag.Value(&cfg.AccrualAddress)
 
-	flag.StringVar(&addr, "a", "", "app address")
-	flag.StringVar(&cfg.DBuri, "d", "", "database uri")
-	flag.StringVar(&accr, "r", "", "accal service address")
+	flag.Var(&cfg.Address, "a", "app address")
+	flag.Var(&cfg.DBuri, "d", "database uri")
+	flag.Var(&cfg.AccrualAddress, "r", "accal service address")
 	flag.Parse()
 
-	cfg.Address = strings.TrimPrefix(addr, "http://")
-	cfg.AccrualAddress = strings.TrimPrefix(accr, "http://")
-} */
+	/* cfg.Address = strings.TrimPrefix(addr, "http://")
+	cfg.AccrualAddress = strings.TrimPrefix(accr, "http://") */
+}

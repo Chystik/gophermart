@@ -45,7 +45,7 @@ func App(cfg *config.App, quit chan os.Signal) {
 	}
 
 	// Postgres client
-	pgClient, err := postgres.NewPgClient(cfg.DBuri, logger)
+	pgClient, err := postgres.NewPgClient(cfg.DBuri.String(), logger)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
@@ -67,7 +67,7 @@ func App(cfg *config.App, quit chan os.Signal) {
 	httpClient := httpclient.NewClient(httpclient.Timeout(20 * time.Second))
 
 	// Accrual web API
-	accrualWebAPI := webapi.NewAccrualWebAPI(httpClient, webapi.Address(cfg.AccrualAddress))
+	accrualWebAPI := webapi.NewAccrualWebAPI(httpClient, webapi.Address(cfg.AccrualAddress.String()))
 
 	// Repository
 	userRepo := repository.NewUserRepository(pgClient)
@@ -86,7 +86,7 @@ func App(cfg *config.App, quit chan os.Signal) {
 	restapihandlers.NewRouter(handler, userInteractor, orderInteractor, cfg.JWTkey, logger)
 
 	// HTTP server
-	server := httpserver.NewServer(handler, httpserver.Address(cfg.Address))
+	server := httpserver.NewServer(handler, httpserver.Address(cfg.Address.String()))
 	go func() {
 		logger.Info(fmt.Sprintf(logHTTPServerStart, cfg.Address))
 		if err := server.Startup(); !errors.Is(err, http.ErrServerClosed) {

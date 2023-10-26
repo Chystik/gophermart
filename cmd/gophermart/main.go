@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,13 +13,13 @@ import (
 func main() {
 	cfg := config.NewAppConfig()
 
+	parseFlags(cfg)
 	err := parseEnv(cfg)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
-	//parseFlags(cfg)
 
-	// Graceful shutdown setup
+	// channel for Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 

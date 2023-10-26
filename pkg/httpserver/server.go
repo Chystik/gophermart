@@ -5,17 +5,12 @@ import (
 	"net/http"
 )
 
-const (
-	defaultAddr = ":80"
-)
-
 type Server struct {
 	server *http.Server
 }
 
 func NewServer(handler http.Handler, opts ...Options) *Server {
 	httpServer := &http.Server{
-		Addr:    defaultAddr,
 		Handler: handler,
 	}
 
