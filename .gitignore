@@ -22,5 +22,10 @@ vendor/
 .idea
 .vscode
 
+# test binaries
+statictest
+random
+gophermarttest
+
 # logs
 *.log

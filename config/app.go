@@ -56,14 +56,6 @@ func (accr AccrualAddress) String() string {
 }
 
 func (accr *AccrualAddress) Set(s string) error {
-	hp := strings.Split(s, ":")
-	if len(hp) != 2 {
-		return errors.New("expect address in a form host:port")
-	}
-	_, err := strconv.Atoi(hp[1])
-	if err != nil {
-		return errors.New("only digits allowed for port in a form host:port")
-	}
 	*accr = AccrualAddress(s)
 	return nil
 }
