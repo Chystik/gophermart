@@ -1,0 +1,29 @@
+FROM docker.io/golang:1.21
+
+WORKDIR $GOPATH/src/gophermart
+COPY . .
+
+# Fetch dependencies.
+RUN go mod download
+RUN go mod verify
+
+# Build the binary
+RUN GOOS=linux GOARCH=amd64 go build -buildvcs=false -o /usr/local/bin/gophermart ./cmd/gophermart
+
+RUN chmod -R +x $GOPATH/src/gophermart/.tools
+RUN chmod +x $GOPATH/src/gophermart/cmd/accrual/accrual_linux_amd64
+
+COPY ./.tools/gophermarttest /usr/local/bin/
+COPY ./.tools/random /usr/local/bin/
+COPY ./cmd/accrual/accrual_linux_amd64 /usr/local/bin/
+
+CMD gophermarttest \
+      -test.v -test.run=^TestGophermart$ \
+      -gophermart-binary-path=gophermart \
+      -gophermart-host=localhost \
+      -gophermart-port=8080 \
+      -gophermart-database-uri="postgresql://postgres:postgres@postgres/praktikum?sslmode=disable" \
+      -accrual-binary-path=accrual_linux_amd64 \
+      -accrual-host=localhost \
+      -accrual-port=$(random unused-port) \
+      -accrual-database-uri="postgresql://postgres:postgres@postgres/praktikum?sslmode=disable"

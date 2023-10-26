@@ -49,7 +49,8 @@ dev-down:
 
 dev-test:
 	docker-compose -f=docker-compose.dev-test.yml --env-file=.env.dev up -d
-#	docker-compose -f=docker-compose.dev-test.yml --env-file=.env.dev down --rmi local
+	docker-compose -f=docker-compose.dev-test.yml --env-file=.env.dev logs -f tests
+	docker-compose -f=docker-compose.dev-test.yml --env-file=.env.dev down --rmi local
 
 accrual:
 	./cmd/accrual/accrual_linux_amd64 -a=localhost:8787 -d="postgresql://postgres:postgres@localhost:5432/praktikum?sslmode=disable"
