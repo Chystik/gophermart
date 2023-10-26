@@ -14,11 +14,11 @@ race:
 lint:
 	/home/user/go/bin/golangci-lint run
 
-accrual-port = $(shell ./random unused-port)
+accrual-port = $(shell ./.tools/random unused-port)
 gophermart-bin = ./cmd/gophermart/gophermart
 autotest:
 	go build -o $(gophermart-bin) ./cmd/gophermart
-	./gophermarttest \
+	./.tools/gophermarttest \
     -test.v -test.run=^TestGophermart$ \
     -gophermart-binary-path=$(gophermart-bin) \
     -gophermart-host=localhost \
@@ -39,7 +39,7 @@ cover:
 	rm coverage.out
 
 statictest:
-	go vet -vettool=statictest ./...
+	go vet -vettool=./.tools/statictest ./...
 
 dev-up:
 	docker-compose -f=docker-compose.dev.yml --env-file=.env.dev up -d
