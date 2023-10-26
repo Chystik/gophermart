@@ -21,7 +21,8 @@ type (
 
 func NewAppConfig() *App {
 	return &App{
-		JWTkey: []byte("my_secret_key"),
+		Address: ":8080",
+		JWTkey:  []byte("my_secret_key"),
 	}
 }
 

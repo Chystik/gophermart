@@ -21,8 +21,8 @@ func main() {
 		}
 	}
 
-	parseFlags(cfg)
 	parseEnv(cfg)
+	parseFlags(cfg)
 
 	// channel for Graceful shutdown
 	quit := make(chan os.Signal, 1)

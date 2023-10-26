@@ -39,7 +39,7 @@ const (
 
 func App(cfg *config.App, quit chan os.Signal) {
 	// Logger
-	logger, err := logger.Initialize(defaultLogLevel, "app.log")
+	logger, err := logger.Initialize(defaultLogLevel, "./app.log")
 	if err != nil {
 		panic(err)
 	}
