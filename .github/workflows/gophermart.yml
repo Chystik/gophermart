@@ -32,10 +32,11 @@ jobs:
       - name: Download autotests binaries
         uses: robinraju/release-downloader@v1.8
         with:
-          repository: Yandex-Practicum/go-autotests-bin
-          latest: true
+          repository: Yandex-Practicum/go-autotests
+          tag: refactor
           fileName: "*"
           out-file-path: .tools
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup autotest binary
         run: |
