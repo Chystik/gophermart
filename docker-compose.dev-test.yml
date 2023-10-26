@@ -28,6 +28,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.test
+      args:
+        BIN_PATH: /usr/local/bin
     depends_on:
       db:
         condition: service_healthy

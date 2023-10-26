@@ -1,21 +1,27 @@
 FROM docker.io/golang:1.21
 
+ARG BIN_PATH
+
 WORKDIR $GOPATH/src/gophermart
+
 COPY . .
 
 # Fetch dependencies.
 RUN go mod download
 RUN go mod verify
 
+COPY ./cmd/accrual/accrual_linux_amd64 $BIN_PATH/
+
 # Build the binary
-RUN GOOS=linux GOARCH=amd64 go build -buildvcs=false -o /usr/local/bin/gophermart ./cmd/gophermart
+RUN GOOS=linux GOARCH=amd64 go build -buildvcs=false -o $BIN_PATH/gophermart ./cmd/gophermart
 
-RUN chmod -R +x $GOPATH/src/gophermart/.tools
-RUN chmod +x $GOPATH/src/gophermart/cmd/accrual/accrual_linux_amd64
+# Get latest praktikum test tools
+RUN wget -O $BIN_PATH/gophermarttest https://github.com/Yandex-Practicum/go-autotests/releases/download/v0.10.1/gophermarttest
+RUN wget -O $BIN_PATH/random https://github.com/Yandex-Practicum/go-autotests/releases/download/v0.10.1/random
+RUN wget -O $BIN_PATH/statictest https://github.com/Yandex-Practicum/go-autotests/releases/download/v0.10.1/statictest
+RUN chmod -R +x $BIN_PATH
 
-COPY ./.tools/gophermarttest /usr/local/bin/
-COPY ./.tools/random /usr/local/bin/
-COPY ./cmd/accrual/accrual_linux_amd64 /usr/local/bin/
+RUN go vet -vettool=$BIN_PATH/statictest ./...
 
 CMD gophermarttest \
       -test.v -test.run=^TestGophermart$ \
