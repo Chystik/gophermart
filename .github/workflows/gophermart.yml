@@ -9,9 +9,10 @@ on:
       - master
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
-    container: golang:1.19
+    container: golang:1.21
 
     services:
       postgres:
@@ -30,10 +31,10 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Download autotests binaries
-        uses: robinraju/release-downloader@v1.2
+        uses: robinraju/release-downloader@v1.8
         with:
           repository: Yandex-Practicum/go-autotests-bin
-          latest: true
+          tag: "v0.9.16"
           fileName: "*"
           out-file-path: .tools
 
@@ -54,24 +55,9 @@ jobs:
             -test.v -test.run=^TestGophermart$ \
             -gophermart-binary-path=cmd/gophermart/gophermart \
             -gophermart-host=localhost \
-            -gophermart-port=9145 \
+            -gophermart-port=8080 \
             -gophermart-database-uri="postgresql://postgres:postgres@postgres/praktikum?sslmode=disable" \
             -accrual-binary-path=cmd/accrual/accrual_linux_amd64 \
             -accrual-host=localhost \
             -accrual-port=$(random unused-port) \
             -accrual-database-uri="postgresql://postgres:postgres@postgres/praktikum?sslmode=disable"
-
-      - name: Upload app log file
-        uses: actions/upload-artifact@v3
-        with:
-          name: app-log
-          path: app.log
-          retention-days: 5
-
-      - name: Download app log file
-        uses: actions/download-artifact@v3
-        with:
-          name: app-log
-
-      - name: Test log file
-        run: ls -R
