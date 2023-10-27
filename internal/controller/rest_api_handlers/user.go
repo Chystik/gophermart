@@ -10,6 +10,7 @@ import (
 	"github.com/Chystik/gophermart/internal/models"
 	"github.com/Chystik/gophermart/internal/usecase"
 	"github.com/Chystik/gophermart/pkg/logger"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 

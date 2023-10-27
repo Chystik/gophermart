@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"github.com/Chystik/gophermart/internal/models"
-	"github.com/Chystik/gophermart/pkg/postgres"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -17,10 +17,10 @@ var (
 )
 
 type orderRepository struct {
-	*postgres.PgClient
+	*sqlx.DB
 }
 
-func NewOrderRepository(db *postgres.PgClient) *orderRepository {
+func NewOrderRepository(db *sqlx.DB) *orderRepository {
 	return &orderRepository{db}
 }
 

@@ -44,8 +44,8 @@ func App(cfg *config.App, quit chan os.Signal) {
 		panic(err)
 	}
 
-	// Postgres client
-	pgClient, err := postgres.NewPgClient(cfg.DBuri.String(), logger)
+	// Postgres db
+	pg, err := postgres.New(cfg.DBuri.String(), logger)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
@@ -53,12 +53,12 @@ func App(cfg *config.App, quit chan os.Signal) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultShutdownTimeout)
 	defer cancel()
 
-	err = pgClient.Connect(ctx)
+	err = pg.Connect(ctx)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
 
-	err = pgClient.Migrate()
+	err = pg.Migrate()
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
@@ -70,9 +70,9 @@ func App(cfg *config.App, quit chan os.Signal) {
 	accrualWebAPI := webapi.NewAccrualWebAPI(httpClient, webapi.Address(cfg.AccrualAddress.String()))
 
 	// Repository
-	userRepo := repository.NewUserRepository(pgClient)
-	orderRepo := repository.NewOrderRepository(pgClient)
-	withdrawalRepo := repository.NewWithdrawalRepository(pgClient)
+	userRepo := repository.NewUserRepository(pg.DB)
+	orderRepo := repository.NewOrderRepository(pg.DB)
+	withdrawalRepo := repository.NewWithdrawalRepository(pg.DB)
 
 	// Interactor
 	userInteractor := usecase.NewUserInteractor(userRepo, withdrawalRepo)
@@ -89,7 +89,7 @@ func App(cfg *config.App, quit chan os.Signal) {
 	server := httpserver.NewServer(handler, httpserver.Address(cfg.Address.String()))
 	go func() {
 		logger.Info(fmt.Sprintf(logHTTPServerStart, cfg.Address))
-		if err := server.Startup(); !errors.Is(err, http.ErrServerClosed) {
+		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			logger.Fatal(err.Error())
 		}
 		logger.Info(logHTTPServerStop)
@@ -117,7 +117,7 @@ func App(cfg *config.App, quit chan os.Signal) {
 	logger.Info(logGracefulHTTPServerShutdown)
 
 	// Graceful disconnect db client
-	if err := pgClient.Disconnect(ctxShutdown); err != nil {
+	if err := pg.Disconnect(ctxShutdown); err != nil {
 		logger.Fatal(err.Error())
 	}
 	logger.Info(logDBDisconnect)

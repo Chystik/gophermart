@@ -12,8 +12,8 @@ import (
 func NewRouter(handler *chi.Mux, ui usecase.UserInteractor, oi usecase.OrderInteractor, JWTkey []byte, l logger.AppLogger) {
 	// Options
 	handler.Use(md.MidLogger(l).WithLogging)
-	//handler.Use(md.GzipMiddleware)
-	handler.Use(middleware.Compress(5))
+	handler.Use(md.GzipMiddleware)
+	//handler.Use(middleware.Compress(5))
 	handler.Use(middleware.Recoverer)
 
 	// Routes
@@ -30,7 +30,7 @@ func NewRouter(handler *chi.Mux, ui usecase.UserInteractor, oi usecase.OrderInte
 		// Private Routes
 		// Require Authentication
 		r.Group(func(r chi.Router) {
-			r.Use(md.Authorization)
+			r.Use(md.Authentication)
 			r.Route("/orders", func(r chi.Router) {
 				r.Post("/", or.uploadOrders)
 				r.Get("/", or.downloadOrders)
@@ -43,26 +43,3 @@ func NewRouter(handler *chi.Mux, ui usecase.UserInteractor, oi usecase.OrderInte
 		})
 	})
 }
-
-/* r.Route("/api/user", func(r chi.Router) {
-	// Public Routes
-	r.Group(func(r chi.Router) {
-		r.Post("/register", h.Register)
-		r.Post("/login", h.Login)
-	})
-
-	// Private Routes
-	// Require Authentication
-	r.Group(func(r chi.Router) {
-		r.Use(middleware.Authorization)
-		r.Route("/orders", func(r chi.Router) {
-			r.Post("/", h.UploadOrders)
-			r.Get("/", h.DownloadOrders)
-		})
-		r.Route("/balance", func(r chi.Router) {
-			r.Get("/", h.GetBalance)
-			r.Post("/withdraw", h.Withdraw)
-		})
-		r.Get("/withdrawals", h.GetWithdrawals)
-	})
-}) */

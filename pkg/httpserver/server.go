@@ -1,12 +1,11 @@
 package httpserver
 
 import (
-	"context"
 	"net/http"
 )
 
 type Server struct {
-	server *http.Server
+	*http.Server
 }
 
 func NewServer(handler http.Handler, opts ...Options) *Server {
@@ -15,7 +14,7 @@ func NewServer(handler http.Handler, opts ...Options) *Server {
 	}
 
 	server := &Server{
-		server: httpServer,
+		httpServer,
 	}
 
 	for _, opt := range opts {
@@ -25,10 +24,6 @@ func NewServer(handler http.Handler, opts ...Options) *Server {
 	return server
 }
 
-func (s *Server) Shutdown(ctx context.Context) error {
-	return s.server.Shutdown(ctx)
-}
-
 func (s *Server) Startup() error {
-	return s.server.ListenAndServe()
+	return s.ListenAndServe()
 }

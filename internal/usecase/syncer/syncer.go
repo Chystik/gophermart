@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	defaultRequestInterval time.Duration = 1 * time.Microsecond
+	defaultRequestInterval time.Duration = 100 * time.Millisecond
 )
 
 var once sync.Once

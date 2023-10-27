@@ -4,14 +4,15 @@ import (
 	"context"
 
 	"github.com/Chystik/gophermart/internal/models"
-	"github.com/Chystik/gophermart/pkg/postgres"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type withdrawalRepository struct {
-	*postgres.PgClient
+	*sqlx.DB
 }
 
-func NewWithdrawalRepository(db *postgres.PgClient) *withdrawalRepository {
+func NewWithdrawalRepository(db *sqlx.DB) *withdrawalRepository {
 	return &withdrawalRepository{db}
 }
 

@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"github.com/Chystik/gophermart/internal/models"
-	"github.com/Chystik/gophermart/pkg/postgres"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -17,10 +17,10 @@ var (
 )
 
 type userRepository struct {
-	*postgres.PgClient
+	*sqlx.DB
 }
 
-func NewUserRepository(db *postgres.PgClient) *userRepository {
+func NewUserRepository(db *sqlx.DB) *userRepository {
 	return &userRepository{db}
 }
 

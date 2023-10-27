@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Chystik/gophermart/internal/models"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -14,7 +15,7 @@ var (
 	cookieName                  = "token"
 )
 
-func Authorization(next http.Handler) http.Handler {
+func Authentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie(cookieName)
 		if err != nil {

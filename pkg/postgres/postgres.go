@@ -2,11 +2,8 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
-	"net/http"
-	"time"
 
 	"github.com/Chystik/gophermart/pkg/logger"
 
@@ -26,14 +23,14 @@ var (
 	logDatabaseCreated = "database %s created"
 )
 
-type PgClient struct {
-	db         *sqlx.DB
+type Postgres struct {
+	*sqlx.DB
 	connConfig *pgx.ConnConfig
 	logger     logger.AppLogger
 }
 
-// opens a db and perform migrations
-func NewPgClient(uri string, logger logger.AppLogger) (*PgClient, error) {
+// New opens a db and perform migrations
+func New(uri string, logger logger.AppLogger) (*Postgres, error) {
 	cc, err := pgx.ParseURI(uri)
 	if err != nil {
 		return nil, err
@@ -48,15 +45,15 @@ func NewPgClient(uri string, logger logger.AppLogger) (*PgClient, error) {
 		return nil, err
 	}
 
-	return &PgClient{
-		db:         db,
+	return &Postgres{
+		DB:         db,
 		connConfig: &cc,
 		logger:     logger,
 	}, nil
 }
 
-// Connect to a database and verify with a ping, if successful - create db if not exist
-func (pc *PgClient) Connect(ctx context.Context) error {
+// Connect connects to the database and verify with a ping, if successful - create db if not exist
+func (pc *Postgres) Connect(ctx context.Context) error {
 	var err error
 	var SSLmode string
 
@@ -64,7 +61,7 @@ func (pc *PgClient) Connect(ctx context.Context) error {
 		SSLmode = "disable"
 	}
 
-	pc.db, err = sqlx.ConnectContext(
+	pc.DB, err = sqlx.ConnectContext(
 		ctx,
 		"pgx",
 		fmt.Sprintf(
@@ -81,7 +78,7 @@ func (pc *PgClient) Connect(ctx context.Context) error {
 		return err
 	}
 
-	_, err = pc.db.Exec(fmt.Sprintf("CREATE DATABASE %s", pc.connConfig.Database))
+	_, err = pc.DB.Exec(fmt.Sprintf("CREATE DATABASE %s", pc.connConfig.Database))
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if !errors.As(err, &pgErr) || pgerrcode.DuplicateDatabase != pgErr.Code {
@@ -93,7 +90,7 @@ func (pc *PgClient) Connect(ctx context.Context) error {
 		pc.logger.Info(fmt.Sprintf(logDatabaseCreated, pc.connConfig.Database))
 	}
 
-	pc.db, err = sqlx.ConnectContext(
+	pc.DB, err = sqlx.ConnectContext(
 		ctx,
 		"pgx",
 		fmt.Sprintf(
@@ -114,8 +111,9 @@ func (pc *PgClient) Connect(ctx context.Context) error {
 	return nil
 }
 
-func (pc *PgClient) Migrate() error {
-	d, err := postgres.WithInstance(pc.db.DB, &postgres.Config{})
+// Migrate applies all up migrations
+func (pc *Postgres) Migrate() error {
+	d, err := postgres.WithInstance(pc.DB.DB, &postgres.Config{})
 	if err != nil {
 		pc.logger.Error(err.Error())
 		return err
@@ -138,42 +136,6 @@ func (pc *PgClient) Migrate() error {
 	return nil
 }
 
-func (pc *PgClient) Disconnect(ctx context.Context) error {
-	return pc.db.Close()
-}
-
-func (pc *PgClient) Ping(ctx context.Context) error {
-	return pc.db.PingContext(ctx)
-}
-
-func (pc *PgClient) PingHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	w.Header().Set("Content-Tye", "text/plain")
-
-	err := pc.Ping(ctx)
-	if err != nil {
-		pc.logger.Error(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
-func (pc *PgClient) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
-	return pc.db.ExecContext(ctx, query, args...)
-}
-
-func (pc *PgClient) GetContext(ctx context.Context, dest any, query string, args ...any) error {
-	return pc.db.GetContext(ctx, dest, query, args...)
-}
-
-func (pc *PgClient) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
-	return pc.db.QueryRowContext(ctx, query, args...)
-}
-
-func (pc *PgClient) SelectContext(ctx context.Context, dest any, query string, args ...any) error {
-	return pc.db.SelectContext(ctx, dest, query, args...)
+func (pc *Postgres) Disconnect(ctx context.Context) error {
+	return pc.DB.Close()
 }
