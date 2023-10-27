@@ -17,7 +17,7 @@ type (
 
 	OrderInteractor interface {
 		Create(context.Context, models.Order) error
-		GetAll(context.Context) ([]models.Order, error) //login models.User
+		GetList(context.Context, models.User) ([]models.Order, error)
 	}
 
 	UserRepository interface {
@@ -29,7 +29,7 @@ type (
 	OrderRepository interface {
 		Create(context.Context, models.Order) error
 		Get(context.Context, models.Order) (models.Order, error)
-		GetAll(context.Context) ([]models.Order, error)
+		GetList(context.Context, models.User) ([]models.Order, error)
 		GetUnprocessed(context.Context) ([]models.Order, error)
 		Update(context.Context, models.Order) error
 	}

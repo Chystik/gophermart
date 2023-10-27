@@ -61,14 +61,8 @@ func (or *orderRepository) Get(ctx context.Context, order models.Order) (models.
 	return order, nil
 }
 
-func (or *orderRepository) GetAll(ctx context.Context) ([]models.Order, error) {
+func (or *orderRepository) GetList(ctx context.Context, login models.User) ([]models.Order, error) {
 	var orders []models.Order
-	var claimsKey models.ClaimsKey = "props"
-
-	claims, ok := ctx.Value(claimsKey).(*models.AuthClaims)
-	if !ok {
-		return orders, errors.New("bad login")
-	}
 
 	query := `
 			SELECT number, user_id, status, accrual, uploaded_at
@@ -76,7 +70,7 @@ func (or *orderRepository) GetAll(ctx context.Context) ([]models.Order, error) {
 			WHERE user_id = $1
 			ORDER BY uploaded_at ASC`
 
-	err := or.SelectContext(ctx, &orders, query, claims.Login)
+	err := or.SelectContext(ctx, &orders, query, login.Login)
 	if err != nil {
 		return nil, err
 	}

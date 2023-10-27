@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"errors"
 
 	"golang.org/x/crypto/bcrypt"
@@ -33,7 +34,7 @@ func (u *User) SetPassword() error {
 	return nil
 }
 
-func (u *User) Authenticate(actual User) error {
+func (u User) Authenticate(actual User) error {
 	err := bcrypt.CompareHashAndPassword([]byte(actual.Password), []byte(u.Password))
 	if err != nil {
 		if err == bcrypt.ErrMismatchedHashAndPassword {
@@ -43,4 +44,13 @@ func (u *User) Authenticate(actual User) error {
 	}
 
 	return nil
+}
+
+func (u User) GetLoginFromContext(ctx context.Context) (string, error) {
+	claims, ok := ctx.Value(ClaimsKeyName).(*AuthClaims)
+	if !ok {
+		return "", errWrongAuthClaims
+	}
+
+	return claims.Login, nil
 }

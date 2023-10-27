@@ -40,6 +40,6 @@ func (oi *orderInteractor) Create(ctx context.Context, order models.Order) error
 	return repository.ErrUploadedByAnotherUser
 }
 
-func (oi *orderInteractor) GetAll(ctx context.Context) ([]models.Order, error) {
-	return oi.orderRepo.GetAll(ctx)
+func (oi *orderInteractor) GetList(ctx context.Context, login models.User) ([]models.Order, error) {
+	return oi.orderRepo.GetList(ctx, login)
 }

@@ -1,5 +1,5 @@
 #SHELL = /bin/bash
-.PHONY: autotest dep test race lint gen cover statictest dev-up dev-down accrual dev-test
+.PHONY: autotest dep test race lint gen cover statictest dev-up dev-down accrual dev-autotest
 
 dep:
 	go mod download
@@ -23,11 +23,11 @@ autotest:
     -gophermart-binary-path=$(gophermart-bin) \
     -gophermart-host=localhost \
     -gophermart-port=8080 \
-    -gophermart-database-uri="postgresql://postgres:postgres@localhost:5432/praktikum?sslmode=disable" \
+    -gophermart-database-uri="postgresql://postgres:postgres@localhost/praktikum?sslmode=disable" \
     -accrual-binary-path=./cmd/accrual/accrual_linux_amd64 \
     -accrual-host=localhost \
     -accrual-port=$(accrual-port) \
-    -accrual-database-uri="postgresql://postgres:postgres@localhost:5432/praktikum?sslmode=disable"
+    -accrual-database-uri="postgresql://postgres:postgres@localhost/praktikum?sslmode=disable"
 	rm $(gophermart-bin)
 
 gen:
@@ -47,7 +47,7 @@ dev-up:
 dev-down:
 	docker-compose -f=docker-compose.dev.yml --env-file=.env.dev down --rmi local
 
-dev-test:
+dev-autotest:
 	docker-compose -f=docker-compose.dev-test.yml --env-file=.env.dev up -d
 	docker-compose -f=docker-compose.dev-test.yml --env-file=.env.dev logs -f tests
 	docker-compose -f=docker-compose.dev-test.yml --env-file=.env.dev down --rmi local
