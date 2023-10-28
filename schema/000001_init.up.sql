@@ -11,7 +11,7 @@ create table if not exists praktikum.order (
     number bigint primary key not null unique,
     user_id varchar(50) references praktikum.user(login) on delete cascade not null,
     status varchar(50) not null,
-    uploaded_at timestamp not null,
+    uploaded_at timestamp with time zone not null,
     accrual double precision
 );
 
@@ -19,5 +19,5 @@ create table if not exists praktikum.withdrawal (
     id serial primary key not null unique,
     order_id bigint not null,
     sum double precision not null,
-    processed_at timestamp not null
+    processed_at timestamp with time zone not null
 );
