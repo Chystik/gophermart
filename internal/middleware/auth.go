@@ -15,7 +15,7 @@ var (
 	cookieName                  = "token"
 )
 
-func Authentication(next http.Handler) http.Handler {
+func Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie(cookieName)
 		if err != nil {

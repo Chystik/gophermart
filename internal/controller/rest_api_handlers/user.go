@@ -29,7 +29,6 @@ func newUserRoutes(ui usecase.UserInteractor, JWTkey []byte, l logger.AppLogger)
 }
 
 func (ur *userRoutes) register(w http.ResponseWriter, r *http.Request) {
-	//var creds credentials
 	var user models.User
 	var ctx = context.Background()
 	var err error

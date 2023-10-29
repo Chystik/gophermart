@@ -3,13 +3,12 @@ package run
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/Chystik/gophermart/config"
-	restapihandlers "github.com/Chystik/gophermart/internal/controller/rest_api_handlers"
+	handlers "github.com/Chystik/gophermart/internal/controller/rest_api_handlers"
 	"github.com/Chystik/gophermart/internal/infrastructure/repository"
 	"github.com/Chystik/gophermart/internal/infrastructure/webapi"
 	"github.com/Chystik/gophermart/internal/usecase"
@@ -20,6 +19,7 @@ import (
 	"github.com/Chystik/gophermart/pkg/postgres"
 
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
 const (
@@ -27,11 +27,11 @@ const (
 	defaultShutdownTimeout = 5 * time.Second
 	accrualAddrScheme      = "http"
 
-	logHTTPServerStart            = "HTTP server started on port: %s"
+	logHTTPServerStart            = "HTTP server started"
 	logHTTPServerStop             = "Stopped serving new connections"
 	logSignalInterrupt            = "Interrupt signal. Shutdown"
 	logGracefulHTTPServerShutdown = "Graceful shutdown of HTTP Server complete."
-	logSyncStart                  = "data syncronization with accrual service %s started"
+	logSyncStart                  = "data syncronization with accrual service started"
 	logSyncStop                   = "Stopped syncronization with accrual service"
 	logGracefulSyncShutdown       = "Graceful shutdown of accrual sync complete."
 	logDBDisconnect               = "Graceful close connection for DB client complete."
@@ -83,12 +83,12 @@ func App(cfg *config.App, quit chan os.Signal) {
 
 	// Router
 	handler := chi.NewRouter()
-	restapihandlers.NewRouter(handler, userInteractor, orderInteractor, cfg.JWTkey, logger)
+	handlers.NewRouter(handler, userInteractor, orderInteractor, cfg.JWTkey, logger)
 
 	// HTTP server
 	server := httpserver.NewServer(handler, httpserver.Address(cfg.Address.String()))
 	go func() {
-		logger.Info(fmt.Sprintf(logHTTPServerStart, cfg.Address))
+		logger.Info(logHTTPServerStart, zap.String("addr", string(cfg.Address)))
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			logger.Fatal(err.Error())
 		}
@@ -97,7 +97,7 @@ func App(cfg *config.App, quit chan os.Signal) {
 
 	// Start syncer
 	go func() {
-		logger.Info(fmt.Sprintf(logSyncStart, cfg.AccrualAddress))
+		logger.Info(logSyncStart, zap.String("addr", string(cfg.AccrualAddress)))
 		if err := syncer.Run(); err != nil {
 			logger.Fatal(err.Error())
 		}

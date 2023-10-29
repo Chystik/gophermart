@@ -35,7 +35,7 @@ type (
 	}
 
 	WithdrawalRepository interface {
-		Withdraw(context.Context, models.Withdrawal) error
+		Create(context.Context, models.Withdrawal) error
 		GetAll(context.Context) ([]models.Withdrawal, error)
 	}
 

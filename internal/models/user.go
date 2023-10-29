@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ErrWrongCreds = errors.New("mismatch login or password")
+	ErrWrongCreds = errors.New("wrong password")
 )
 
 type User struct {

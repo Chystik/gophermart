@@ -55,7 +55,7 @@ func (ui *userInteractor) Withdraw(ctx context.Context, w models.Withdrawal, use
 	actual.Withdrawn += w.Sum
 	w.ProcessedAt = models.RFC3339Time{Time: time.Now()}
 
-	err = ui.withdrawalRepo.Withdraw(ctx, w)
+	err = ui.withdrawalRepo.Create(ctx, w)
 	if err != nil {
 		return err
 	}

@@ -12,8 +12,7 @@ import (
 func NewRouter(handler *chi.Mux, ui usecase.UserInteractor, oi usecase.OrderInteractor, JWTkey []byte, l logger.AppLogger) {
 	// Options
 	handler.Use(md.MidLogger(l).WithLogging)
-	handler.Use(md.GzipMiddleware)
-	//handler.Use(middleware.Compress(5))
+	handler.Use(md.Compress(1))
 	handler.Use(middleware.Recoverer)
 
 	// Routes
@@ -30,7 +29,7 @@ func NewRouter(handler *chi.Mux, ui usecase.UserInteractor, oi usecase.OrderInte
 		// Private Routes
 		// Require Authentication
 		r.Group(func(r chi.Router) {
-			r.Use(md.Authentication)
+			r.Use(md.Authenticate)
 			r.Route("/orders", func(r chi.Router) {
 				r.Post("/", or.uploadOrders)
 				r.Get("/", or.downloadOrders)

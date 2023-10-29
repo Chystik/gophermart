@@ -16,7 +16,7 @@ func NewWithdrawalRepository(db *sqlx.DB) *withdrawalRepository {
 	return &withdrawalRepository{db}
 }
 
-func (wr *withdrawalRepository) Withdraw(ctx context.Context, w models.Withdrawal) error {
+func (wr *withdrawalRepository) Create(ctx context.Context, w models.Withdrawal) error {
 	query := `
 			INSERT INTO	praktikum.withdrawal (order_id, sum, processed_at)
 			VALUES ($1, $2, $3)`
