@@ -23,12 +23,11 @@ func NewOrderInteractor(or OrderRepository) *orderInteractor {
 func (oi *orderInteractor) Create(ctx context.Context, order models.Order) error {
 	var err error
 
-	order.Status = "NEW"
-	order.UploadedAt = models.RFC3339Time{Time: time.Now()}
-
 	o, err := oi.orderRepo.Get(ctx, order)
 	if err != nil {
 		if err == repository.ErrNotFound {
+			order.Status = "NEW"
+			order.UploadedAt = models.RFC3339Time{Time: time.Now()}
 			return oi.orderRepo.Create(ctx, order)
 		}
 	}
