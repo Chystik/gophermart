@@ -11,13 +11,13 @@ require (
 )
 
 require (
-	github.com/cockroachdb/apd v1.1.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 )
 
 require (
+	github.com/avito-tech/go-transaction-manager v1.4.0
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker v24.0.6+incompatible // indirect

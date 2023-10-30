@@ -40,6 +40,7 @@ func (or *orderRoutes) uploadOrders(w http.ResponseWriter, r *http.Request) {
 		errorJSON(w, err, http.StatusInternalServerError, or.logger)
 		return
 	}
+	defer r.Body.Close()
 
 	order.Number = string(orderNumberRaw)
 
@@ -58,10 +59,10 @@ func (or *orderRoutes) uploadOrders(w http.ResponseWriter, r *http.Request) {
 
 	err = or.orderInteractor.Create(ctx, order)
 	if err != nil {
-		if err == repository.ErrUploadedByUser {
+		if errors.Is(err, repository.ErrUploadedByUser) {
 			w.WriteHeader(http.StatusOK)
 			return
-		} else if err == repository.ErrUploadedByAnotherUser {
+		} else if errors.Is(err, repository.ErrUploadedByAnotherUser) {
 			w.WriteHeader(http.StatusConflict)
 			return
 		}

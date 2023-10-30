@@ -126,6 +126,10 @@ func (s *syncer) sync() error {
 					s.logger.Error(err.Error())
 					return err
 				}
+				err = s.orderRepo.Update(ctx, orders[i])
+				if err != nil {
+					return err
+				}
 			}
 		}
 

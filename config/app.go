@@ -8,9 +8,9 @@ import (
 
 type (
 	App struct {
-		Address        `env:"RUN_ADDRESS"`
-		DBuri          `env:"DATABASE_URI"`
-		AccrualAddress `env:"ACCRUAL_SYSTEM_ADDRESS"`
+		Address        Address        `env:"RUN_ADDRESS"`
+		DBuri          DBuri          `env:"DATABASE_URI"`
+		AccrualAddress AccrualAddress `env:"ACCRUAL_SYSTEM_ADDRESS"`
 		JWTkey         []byte
 	}
 

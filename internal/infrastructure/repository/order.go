@@ -7,6 +7,7 @@ import (
 
 	"github.com/Chystik/gophermart/internal/models"
 
+	trmsqlx "github.com/avito-tech/go-transaction-manager/sqlx"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
 )
@@ -18,10 +19,14 @@ var (
 
 type orderRepository struct {
 	*sqlx.DB
+	getter *trmsqlx.CtxGetter
 }
 
-func NewOrderRepository(db *sqlx.DB) *orderRepository {
-	return &orderRepository{db}
+func NewOrderRepository(db *sqlx.DB, getter *trmsqlx.CtxGetter) *orderRepository {
+	return &orderRepository{
+		DB:     db,
+		getter: getter,
+	}
 }
 
 func (or *orderRepository) Create(ctx context.Context, order models.Order) error {
@@ -30,7 +35,7 @@ func (or *orderRepository) Create(ctx context.Context, order models.Order) error
 			VALUES (:number, :user_id, :status, :accrual, :uploaded_at)
 			ON CONFLICT (number) DO NOTHING`
 
-	_, err := sqlx.NamedExecContext(ctx, or, query, order)
+	_, err := sqlx.NamedExecContext(ctx, or.getter.DefaultTrOrDB(ctx, or.DB), query, order)
 	if err != nil {
 		pgErr, ok := err.(*pgconn.PgError)
 		if !ok {
@@ -49,7 +54,7 @@ func (or *orderRepository) Get(ctx context.Context, order models.Order) (models.
 			FROM praktikum.order
 			WHERE number = $1`
 
-	err := sqlx.GetContext(ctx, or, &order, query, order.Number)
+	err := sqlx.GetContext(ctx, or.getter.DefaultTrOrDB(ctx, or.DB), &order, query, order.Number)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return order, ErrNotFound
@@ -70,7 +75,7 @@ func (or *orderRepository) GetList(ctx context.Context, login models.User) ([]mo
 			WHERE user_id = :login
 			ORDER BY uploaded_at ASC`
 
-	rows, err := sqlx.NamedQueryContext(ctx, or, query, login)
+	rows, err := sqlx.NamedQueryContext(ctx, or.getter.DefaultTrOrDB(ctx, or.DB), query, login)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +99,7 @@ func (or *orderRepository) Update(ctx context.Context, order models.Order) error
 			SET status = :status, accrual = :accrual
 			WHERE number = :number`
 
-	_, err := sqlx.NamedExecContext(ctx, or, query, order)
+	_, err := sqlx.NamedExecContext(ctx, or.getter.DefaultTrOrDB(ctx, or.DB), query, order)
 
 	return err
 }
@@ -110,7 +115,7 @@ func (or *orderRepository) GetUnprocessed(ctx context.Context) ([]models.Order, 
 			OR status = $3
 			ORDER BY uploaded_at ASC`
 
-	err := sqlx.SelectContext(ctx, or, &orders, query, "PROCESSING", "NEW", "REGISTERED")
+	err := sqlx.SelectContext(ctx, or.getter.DefaultTrOrDB(ctx, or.DB), &orders, query, "PROCESSING", "NEW", "REGISTERED") // ignore "PROCESSED", "INVALID"
 	if err != nil {
 		return nil, err
 	}

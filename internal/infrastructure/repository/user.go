@@ -7,6 +7,7 @@ import (
 
 	"github.com/Chystik/gophermart/internal/models"
 
+	trmsqlx "github.com/avito-tech/go-transaction-manager/sqlx"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
 )
@@ -18,10 +19,14 @@ var (
 
 type userRepository struct {
 	*sqlx.DB
+	getter *trmsqlx.CtxGetter
 }
 
-func NewUserRepository(db *sqlx.DB) *userRepository {
-	return &userRepository{db}
+func NewUserRepository(db *sqlx.DB, getter *trmsqlx.CtxGetter) *userRepository {
+	return &userRepository{
+		DB:     db,
+		getter: getter,
+	}
 }
 
 func (ur *userRepository) Create(ctx context.Context, user models.User) error {
@@ -29,7 +34,7 @@ func (ur *userRepository) Create(ctx context.Context, user models.User) error {
 			INSERT INTO	praktikum.user (login, password, balance, withdrawn)
 			VALUES (:login, :password, :balance, :withdrawn)`
 
-	_, err := sqlx.NamedExecContext(ctx, ur, query, user)
+	_, err := sqlx.NamedExecContext(ctx, ur.getter.DefaultTrOrDB(ctx, ur.DB), query, user)
 	if err != nil {
 		pgErr, ok := err.(*pgconn.PgError)
 		if !ok {
@@ -49,7 +54,7 @@ func (ur *userRepository) Get(ctx context.Context, user models.User) (models.Use
 			FROM praktikum.user
 			WHERE login = :login`
 
-	rows, err := sqlx.NamedQueryContext(ctx, ur, query, user)
+	rows, err := sqlx.NamedQueryContext(ctx, ur.getter.DefaultTrOrDB(ctx, ur.DB), query, user)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return user, ErrNotFound
@@ -78,7 +83,7 @@ func (ur *userRepository) Update(ctx context.Context, user models.User) error {
 			SET balance = :balance, withdrawn = :withdrawn
 			WHERE login = :login`
 
-	_, err := sqlx.NamedExecContext(ctx, ur, query, user)
+	_, err := sqlx.NamedExecContext(ctx, ur.getter.DefaultTrOrDB(ctx, ur.DB), query, user)
 
 	return err
 }

@@ -3,6 +3,7 @@ package restapihandlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -50,7 +51,7 @@ func (ur *userRoutes) register(w http.ResponseWriter, r *http.Request) {
 	err = ur.userInteractor.Register(ctx, user)
 	if err != nil {
 		// Login conflict
-		if err == repository.ErrExists {
+		if errors.Is(err, repository.ErrExists) {
 			errorJSON(w, err, http.StatusConflict, ur.logger)
 			return
 		}
@@ -79,10 +80,10 @@ func (ur *userRoutes) login(w http.ResponseWriter, r *http.Request) {
 	// Verify password
 	err = ur.userInteractor.Authenticate(ctx, user)
 	if err != nil {
-		if err == repository.ErrNotFound { // Not found
+		if errors.Is(err, repository.ErrNotFound) { // Not found
 			errorJSON(w, err, http.StatusUnauthorized, ur.logger)
 			return
-		} else if err == models.ErrWrongCreds { // Wrong password
+		} else if errors.Is(err, models.ErrWrongCreds) { // Wrong password
 			errorJSON(w, err, http.StatusUnauthorized, ur.logger)
 			return
 		}
@@ -146,7 +147,7 @@ func (ur *userRoutes) withdraw(w http.ResponseWriter, r *http.Request) {
 	err = ur.userInteractor.Withdraw(ctx, wth, user)
 	if err != nil {
 		var stat int
-		if err == usecase.ErrNotEnoughMoney {
+		if errors.Is(err, usecase.ErrNotEnoughMoney) {
 			stat = http.StatusPaymentRequired
 		} else {
 			stat = http.StatusInternalServerError
