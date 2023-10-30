@@ -6,9 +6,9 @@ import (
 	"errors"
 
 	"github.com/Chystik/gophermart/internal/models"
-	"github.com/jmoiron/sqlx"
 
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jmoiron/sqlx"
 )
 
 var (
@@ -27,9 +27,9 @@ func NewUserRepository(db *sqlx.DB) *userRepository {
 func (ur *userRepository) Create(ctx context.Context, user models.User) error {
 	query := `
 			INSERT INTO	praktikum.user (login, password, balance, withdrawn)
-			VALUES ($1, $2, $3, $4)`
+			VALUES (:login, :password, :balance, :withdrawn)`
 
-	_, err := ur.ExecContext(ctx, query, user.Login, user.Password, user.Balance, user.Withdrawn)
+	_, err := sqlx.NamedExecContext(ctx, ur, query, user)
 	if err != nil {
 		pgErr, ok := err.(*pgconn.PgError)
 		if !ok {
@@ -44,32 +44,41 @@ func (ur *userRepository) Create(ctx context.Context, user models.User) error {
 }
 
 func (ur *userRepository) Get(ctx context.Context, user models.User) (models.User, error) {
-	var u models.User
-
 	query := `
 			SELECT login, password, balance, withdrawn
 			FROM praktikum.user
-			WHERE login = $1`
+			WHERE login = :login`
 
-	err := ur.GetContext(ctx, &u, query, user.Login)
+	rows, err := sqlx.NamedQueryContext(ctx, ur, query, user)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return u, ErrNotFound
+			return user, ErrNotFound
 		} else {
-			return u, err
+			return user, err
 		}
 	}
+	defer rows.Close()
 
-	return u, nil
+	// Expect only one result
+	if !rows.Next() {
+		return user, rows.Err()
+	}
+
+	err = rows.StructScan(&user)
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
 }
 
 func (ur *userRepository) Update(ctx context.Context, user models.User) error {
 	query := `
 			UPDATE praktikum.user 
-			SET balance = $1, withdrawn = $2
-			WHERE login = $3`
+			SET balance = :balance, withdrawn = :withdrawn
+			WHERE login = :login`
 
-	_, err := ur.ExecContext(ctx, query, user.Balance, user.Withdrawn, user.Login)
+	_, err := sqlx.NamedExecContext(ctx, ur, query, user)
 
 	return err
 }

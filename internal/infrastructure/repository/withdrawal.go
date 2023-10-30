@@ -19,9 +19,9 @@ func NewWithdrawalRepository(db *sqlx.DB) *withdrawalRepository {
 func (wr *withdrawalRepository) Create(ctx context.Context, w models.Withdrawal) error {
 	query := `
 			INSERT INTO	praktikum.withdrawal (order_id, sum, processed_at)
-			VALUES ($1, $2, $3)`
+			VALUES (:order_id, :sum, :processed_at)`
 
-	_, err := wr.ExecContext(ctx, query, w.Order, w.Sum, w.ProcessedAt.Time)
+	_, err := sqlx.NamedExecContext(ctx, wr, query, w)
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func (wr *withdrawalRepository) GetAll(ctx context.Context) ([]models.Withdrawal
 			FROM praktikum.withdrawal
 			ORDER BY processed_at ASC`
 
-	err := wr.SelectContext(ctx, &w, query)
+	err := sqlx.SelectContext(ctx, wr, &w, query)
 	if err != nil {
 		return nil, err
 	}

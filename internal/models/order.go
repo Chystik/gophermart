@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql/driver"
 	"fmt"
 	"strconv"
 	"strings"
@@ -21,6 +22,7 @@ type (
 	}
 )
 
+// Scan - Implement the database/sql scanner interface
 func (f *RFC3339Time) Scan(value interface{}) (err error) {
 	t, ok := value.(time.Time)
 	if !ok {
@@ -28,6 +30,12 @@ func (f *RFC3339Time) Scan(value interface{}) (err error) {
 	}
 	f.Time = t
 	return
+}
+
+// Value - Implementation of valuer for database/sql
+func (f RFC3339Time) Value() (driver.Value, error) {
+	// value needs to be a base driver.Value type
+	return f.Time, nil
 }
 
 func (f *RFC3339Time) UnmarshalJSON(b []byte) (err error) {

@@ -17,6 +17,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+const defaultPgPort uint16 = 5432
+
 var (
 	connStr            = "host=%s port=%d user=%s password=%s sslmode=%s"
 	connStrDB          = "host=%s port=%d user=%s password=%s dbname=%s sslmode=%s"
@@ -37,7 +39,7 @@ func New(uri string, logger logger.AppLogger) (*Postgres, error) {
 	}
 
 	if cc.Port == 0 {
-		cc.Port = 5432
+		cc.Port = defaultPgPort
 	}
 
 	db, err := sqlx.Open("pgx", uri)
