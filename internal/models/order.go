@@ -7,11 +7,11 @@ import (
 type Status string
 
 const (
-	Invalid    = "INVALID"
-	New        = "NEW"
-	Registered = "REGISTERED"
-	Processing = "PROCESSING"
-	Processed  = "PROCESSED"
+	Invalid    Status = "INVALID"
+	New        Status = "NEW"
+	Registered Status = "REGISTERED"
+	Processing Status = "PROCESSING"
+	Processed  Status = "PROCESSED"
 )
 
 type (
