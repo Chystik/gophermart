@@ -12,11 +12,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var (
-	ErrNotFound = errors.New("object not found")
-	ErrExists   = errors.New("object already exists in the repository")
-)
-
 type userRepository struct {
 	*sqlx.DB
 	getter *trmsqlx.CtxGetter
@@ -40,7 +35,7 @@ func (ur *userRepository) Create(ctx context.Context, user models.User) error {
 		if !ok {
 			return err
 		} else if pgErr.Code == "23505" { // login exists: duplicate key value violates unique constraint
-			return ErrExists
+			return &models.AppError{Op: "userRepository.Create", Code: models.ErrExists, Message: "user already exists"}
 		}
 		return err
 	}
@@ -56,8 +51,8 @@ func (ur *userRepository) Get(ctx context.Context, user models.User) (models.Use
 
 	rows, err := sqlx.NamedQueryContext(ctx, ur.getter.DefaultTrOrDB(ctx, ur.DB), query, user)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return user, ErrNotFound
+		if errors.Is(err, sql.ErrNoRows) {
+			return user, &models.AppError{Op: "userRepository.Get", Code: models.ErrNotFound, Message: "user not found"}
 		} else {
 			return user, err
 		}

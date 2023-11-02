@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/Chystik/gophermart/internal/models"
@@ -19,7 +20,7 @@ func Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie(cookieName)
 		if err != nil {
-			if err == http.ErrNoCookie {
+			if errors.Is(err, http.ErrNoCookie) {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
@@ -35,7 +36,7 @@ func Authenticate(next http.Handler) http.Handler {
 			return JWTkey, nil
 		})
 		if err != nil {
-			if err == jwt.ErrSignatureInvalid {
+			if errors.Is(err, jwt.ErrSignatureInvalid) {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}

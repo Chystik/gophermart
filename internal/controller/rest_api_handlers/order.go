@@ -2,18 +2,12 @@ package restapihandlers
 
 import (
 	"context"
-	"errors"
 	"io"
 	"net/http"
 
-	"github.com/Chystik/gophermart/internal/infrastructure/repository"
 	"github.com/Chystik/gophermart/internal/models"
 	"github.com/Chystik/gophermart/internal/usecase"
 	"github.com/Chystik/gophermart/pkg/logger"
-)
-
-var (
-	errNotValidLuhn = errors.New("not valid order number")
 )
 
 type orderRoutes struct {
@@ -37,7 +31,7 @@ func (or *orderRoutes) uploadOrders(w http.ResponseWriter, r *http.Request) {
 
 	orderNumberRaw, err = io.ReadAll(r.Body)
 	if err != nil {
-		errorJSON(w, err, http.StatusInternalServerError, or.logger)
+		errorJSON(w, err, or.logger)
 		return
 	}
 	defer r.Body.Close()
@@ -45,13 +39,14 @@ func (or *orderRoutes) uploadOrders(w http.ResponseWriter, r *http.Request) {
 	order.Number = string(orderNumberRaw)
 
 	if !order.ValidLuhnNumber() {
-		errorJSON(w, errNotValidLuhn, http.StatusUnprocessableEntity, or.logger)
+		err = &models.AppError{Op: "handlersOrder.UploadOrders", Code: models.ErrOrderNumberLuhn}
+		errorJSON(w, err, or.logger)
 		return
 	}
 
 	user.Login, err = user.GetLoginFromContext(r.Context())
 	if err != nil {
-		errorJSON(w, err, http.StatusUnauthorized, or.logger)
+		errorJSON(w, err, or.logger)
 		return
 	}
 
@@ -59,14 +54,7 @@ func (or *orderRoutes) uploadOrders(w http.ResponseWriter, r *http.Request) {
 
 	err = or.orderInteractor.Create(ctx, order)
 	if err != nil {
-		if errors.Is(err, repository.ErrUploadedByUser) {
-			w.WriteHeader(http.StatusOK)
-			return
-		} else if errors.Is(err, repository.ErrUploadedByAnotherUser) {
-			w.WriteHeader(http.StatusConflict)
-			return
-		}
-		errorJSON(w, err, http.StatusInternalServerError, or.logger)
+		errorJSON(w, err, or.logger)
 		return
 	}
 
@@ -79,13 +67,13 @@ func (or *orderRoutes) downloadOrders(w http.ResponseWriter, r *http.Request) {
 
 	login.Login, err = login.GetLoginFromContext(r.Context())
 	if err != nil {
-		errorJSON(w, err, http.StatusUnauthorized, or.logger)
+		errorJSON(w, err, or.logger)
 		return
 	}
 
 	orders, err := or.orderInteractor.GetList(r.Context(), login)
 	if err != nil {
-		errorJSON(w, err, http.StatusInternalServerError, or.logger)
+		errorJSON(w, err, or.logger)
 		return
 	}
 
@@ -94,5 +82,5 @@ func (or *orderRoutes) downloadOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, "application/json", orders, or.logger)
+	writeJSON(w, http.StatusOK, orders, or.logger)
 }

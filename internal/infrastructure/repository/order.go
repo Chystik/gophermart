@@ -12,11 +12,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var (
-	ErrUploadedByUser        = errors.New("object already uploaded by user")
-	ErrUploadedByAnotherUser = errors.New("object already uploaded by another user")
-)
-
 type orderRepository struct {
 	*sqlx.DB
 	getter *trmsqlx.CtxGetter
@@ -41,7 +36,7 @@ func (or *orderRepository) Create(ctx context.Context, order models.Order) error
 		if !ok {
 			return err
 		} else if pgErr.Code == "23505" { // login exists: duplicate key value violates unique constraint
-			return ErrExists
+			return &models.AppError{Op: "orderRepository.Create", Code: models.ErrExists, Message: "order already exists"}
 		}
 	}
 
@@ -56,8 +51,8 @@ func (or *orderRepository) Get(ctx context.Context, order models.Order) (models.
 
 	err := sqlx.GetContext(ctx, or.getter.DefaultTrOrDB(ctx, or.DB), &order, query, order.Number)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return order, ErrNotFound
+		if errors.Is(err, sql.ErrNoRows) {
+			return order, &models.AppError{Op: "orderRepository.Get", Code: models.ErrNotFound, Message: "order not found"}
 		} else {
 			return order, err
 		}
@@ -106,16 +101,14 @@ func (or *orderRepository) Update(ctx context.Context, order models.Order) error
 
 func (or *orderRepository) GetUnprocessed(ctx context.Context) ([]models.Order, error) {
 	var orders []models.Order
+	stat := []string{"PROCESSING", "NEW", "REGISTERED"} // ignore "PROCESSED", "INVALID"
 
 	query := `
 			SELECT number, user_id, status, accrual, uploaded_at
 			FROM praktikum.order
-			WHERE status = $1
-			OR status = $2
-			OR status = $3
-			ORDER BY uploaded_at ASC`
+			WHERE status = ANY ($1)`
 
-	err := sqlx.SelectContext(ctx, or.getter.DefaultTrOrDB(ctx, or.DB), &orders, query, "PROCESSING", "NEW", "REGISTERED") // ignore "PROCESSED", "INVALID"
+	err := sqlx.SelectContext(ctx, or.getter.DefaultTrOrDB(ctx, or.DB), &orders, query, stat)
 	if err != nil {
 		return nil, err
 	}

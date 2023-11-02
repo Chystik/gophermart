@@ -2,9 +2,9 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"time"
 
-	"github.com/Chystik/gophermart/internal/infrastructure/repository"
 	"github.com/Chystik/gophermart/internal/models"
 	"github.com/avito-tech/go-transaction-manager/trm"
 )
@@ -28,18 +28,19 @@ func (oi *orderInteractor) Create(ctx context.Context, order models.Order) error
 	err = oi.trm.Do(ctx, func(ctx context.Context) error {
 		o, err = oi.orderRepo.Get(ctx, order)
 		if err != nil {
-			if err == repository.ErrNotFound {
-				order.Status = "NEW"
+			var target *models.AppError
+			if errors.As(err, &target) && target.Code == models.ErrNotFound {
+				order.Status = models.New
 				order.UploadedAt = models.RFC3339Time{Time: time.Now()}
 				return oi.orderRepo.Create(ctx, order)
 			}
 		}
 
 		if o.User == order.User {
-			return repository.ErrUploadedByUser
+			return &models.AppError{Op: "usecaseUser.Create", Code: models.ErrLoadedByUser}
 		}
 
-		return repository.ErrUploadedByAnotherUser
+		return &models.AppError{Op: "usecaseUser.Create", Code: models.ErrLoadedByAnotherUser}
 	})
 
 	return err

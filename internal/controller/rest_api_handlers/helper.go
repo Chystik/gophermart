@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/Chystik/gophermart/internal/models"
 	"github.com/Chystik/gophermart/pkg/logger"
 )
 
@@ -13,7 +14,7 @@ type errResponse struct {
 	Data    interface{} `json:"data,omitempty"`
 }
 
-func writeJSON(w http.ResponseWriter, status int, contentType string, data any, logger logger.AppLogger, headers ...http.Header) {
+func writeJSON(w http.ResponseWriter, status int, data any, logger logger.AppLogger, headers ...http.Header) {
 	out, err := json.Marshal(data)
 	if err != nil {
 		logger.Error(err.Error())
@@ -26,7 +27,7 @@ func writeJSON(w http.ResponseWriter, status int, contentType string, data any, 
 		}
 	}
 
-	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_, err = w.Write(out)
 	if err != nil {
@@ -35,11 +36,13 @@ func writeJSON(w http.ResponseWriter, status int, contentType string, data any, 
 	}
 }
 
-func errorJSON(w http.ResponseWriter, err error, status int, logger logger.AppLogger) {
+func errorJSON(w http.ResponseWriter, err error, logger logger.AppLogger) {
 	var payload errResponse
 	payload.Error = true
 	payload.Message = err.Error()
 
 	logger.Error(err.Error())
-	writeJSON(w, status, "application/json", payload, logger)
+	status := models.ErrCodeToHTTPStatus(err)
+
+	writeJSON(w, status, payload, logger)
 }

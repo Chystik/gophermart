@@ -1,61 +1,30 @@
 package models
 
 import (
-	"database/sql/driver"
-	"fmt"
 	"strconv"
-	"strings"
-	"time"
+)
+
+type Status string
+
+const (
+	Invalid    = "INVALID"
+	New        = "NEW"
+	Registered = "REGISTERED"
+	Processing = "PROCESSING"
+	Processed  = "PROCESSED"
 )
 
 type (
 	Order struct {
 		Number     string      `json:"number" db:"number"`
 		User       string      `db:"user_id"`
-		Status     string      `json:"status" db:"status"`
-		Accrual    float64     `json:"accrual,omitempty" db:"accrual,omitempty"`
+		Status     Status      `json:"status" db:"status"`
+		Accrual    Money       `json:"accrual,omitempty" db:"accrual,omitempty"`
 		UploadedAt RFC3339Time `json:"uploaded_at" db:"uploaded_at"`
-	}
-
-	RFC3339Time struct {
-		time.Time
 	}
 )
 
-// Scan - Implement the database/sql scanner interface
-func (f *RFC3339Time) Scan(value interface{}) (err error) {
-	t, ok := value.(time.Time)
-	if !ok {
-		return fmt.Errorf("cant assert %T to time.Time", value)
-	}
-	f.Time = t
-	return
-}
-
-// Value - Implementation of valuer for database/sql
-func (f RFC3339Time) Value() (driver.Value, error) {
-	// value needs to be a base driver.Value type
-	return f.Time, nil
-}
-
-func (f *RFC3339Time) UnmarshalJSON(b []byte) (err error) {
-	s := strings.Trim(string(b), `"`) // remove quotes
-	if s == "null" {
-		f.Time = time.Time{}
-		return
-	}
-	f.Time, err = time.Parse(time.RFC3339, s)
-	return
-}
-
-func (f RFC3339Time) MarshalJSON() ([]byte, error) {
-	if f.Time.IsZero() {
-		return []byte("null"), nil
-	}
-	return []byte(fmt.Sprintf("\"%s\"", f.Time.Format(time.RFC3339))), nil
-}
-
-// Valid checks the order number using the Luhn algorithm
+// ValidLuhnNumber checks the order number using the Luhn algorithm
 func (o Order) ValidLuhnNumber() bool {
 	luhn, err := strconv.Atoi(o.Number)
 	if err != nil {

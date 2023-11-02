@@ -2,16 +2,11 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/Chystik/gophermart/internal/models"
 
 	"github.com/avito-tech/go-transaction-manager/trm"
-)
-
-var (
-	ErrNotEnoughMoney = errors.New("not enough money")
 )
 
 type userInteractor struct {
@@ -66,12 +61,13 @@ func (ui *userInteractor) Withdraw(ctx context.Context, w models.Withdrawal, use
 			return err
 		}
 
-		if actual.Balance < w.Sum {
-			return ErrNotEnoughMoney
+		if actual.Balance.LessThan(w.Sum) {
+			return &models.AppError{Op: "userUsecase.Withdraw", Code: models.ErrNotEnoughMoney}
 		}
 
-		actual.Balance -= w.Sum
-		actual.Withdrawn += w.Sum
+		actual.Balance.Substract(w.Sum)
+		actual.Withdrawn.Add(w.Sum)
+
 		w.ProcessedAt = models.RFC3339Time{Time: time.Now()}
 
 		err = ui.withdrawalRepo.Create(ctx, w)

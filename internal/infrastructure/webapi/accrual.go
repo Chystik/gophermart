@@ -45,9 +45,9 @@ func (r *AccrualError) GetRateLimit() (int, error) {
 }
 
 type respBody struct {
-	Number  string  `json:"order"`
-	Status  string  `json:"status"`
-	Accrual float64 `json:"accrual"`
+	Number  string        `json:"order"`
+	Status  models.Status `json:"status"`
+	Accrual float64       `json:"accrual"`
 }
 
 type accrual struct {
@@ -109,7 +109,7 @@ func (a *accrual) GetOrder(ctx context.Context, order models.Order) (models.Orde
 	}
 
 	order.Status = rBody.Status
-	order.Accrual = rBody.Accrual
+	order.Accrual.FromFloat(rBody.Accrual)
 
 	return order, nil
 }

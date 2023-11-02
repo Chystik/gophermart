@@ -3,11 +3,9 @@ package restapihandlers
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"time"
 
-	"github.com/Chystik/gophermart/internal/infrastructure/repository"
 	"github.com/Chystik/gophermart/internal/models"
 	"github.com/Chystik/gophermart/internal/usecase"
 	"github.com/Chystik/gophermart/pkg/logger"
@@ -36,27 +34,21 @@ func (ur *userRoutes) register(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		errorJSON(w, err, http.StatusBadRequest, ur.logger)
+		errorJSON(w, &models.AppError{Op: "handlersUser.Register", Code: models.ErrBadRequest, Message: err.Error()}, ur.logger)
 		return
 	}
 
 	// Hash user password
 	err = user.SetPassword()
 	if err != nil {
-		errorJSON(w, err, http.StatusInternalServerError, ur.logger)
+		errorJSON(w, err, ur.logger)
 		return
 	}
 
 	// Create user
 	err = ur.userInteractor.Register(ctx, user)
 	if err != nil {
-		// Login conflict
-		if errors.Is(err, repository.ErrExists) {
-			errorJSON(w, err, http.StatusConflict, ur.logger)
-			return
-		}
-		// server err
-		errorJSON(w, err, http.StatusInternalServerError, ur.logger)
+		errorJSON(w, err, ur.logger)
 		return
 	}
 
@@ -73,21 +65,14 @@ func (ur *userRoutes) login(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		errorJSON(w, err, http.StatusBadRequest, ur.logger)
+		errorJSON(w, &models.AppError{Op: "handlersUser.Login", Code: models.ErrBadRequest, Message: err.Error()}, ur.logger)
 		return
 	}
 
 	// Verify password
 	err = ur.userInteractor.Authenticate(ctx, user)
 	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) { // Not found
-			errorJSON(w, err, http.StatusUnauthorized, ur.logger)
-			return
-		} else if errors.Is(err, models.ErrWrongCreds) { // Wrong password
-			errorJSON(w, err, http.StatusUnauthorized, ur.logger)
-			return
-		}
-		errorJSON(w, err, http.StatusInternalServerError, ur.logger)
+		errorJSON(w, err, ur.logger)
 		return
 	}
 
@@ -103,19 +88,19 @@ func (ur *userRoutes) getBalance(w http.ResponseWriter, r *http.Request) {
 
 	user.Login, err = user.GetLoginFromContext(r.Context())
 	if err != nil {
-		errorJSON(w, err, http.StatusUnauthorized, ur.logger)
+		errorJSON(w, err, ur.logger)
 		return
 	}
 
 	user, err = ur.userInteractor.Get(ctx, user)
 	if err != nil {
-		errorJSON(w, err, http.StatusInternalServerError, ur.logger)
+		errorJSON(w, err, ur.logger)
 		return
 	}
 
 	balance := fromDomainBalance(user)
 
-	writeJSON(w, http.StatusOK, "application/json", balance, ur.logger)
+	writeJSON(w, http.StatusOK, balance, ur.logger)
 }
 
 func (ur *userRoutes) withdraw(w http.ResponseWriter, r *http.Request) {
@@ -127,32 +112,27 @@ func (ur *userRoutes) withdraw(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewDecoder(r.Body).Decode(&wth)
 	if err != nil {
-		errorJSON(w, err, http.StatusUnprocessableEntity, ur.logger)
+		errorJSON(w, &models.AppError{Op: "handlersUser.Withdraw", Code: models.ErrOrderNumber, Message: err.Error()}, ur.logger)
 		return
 	}
 
 	order.Number = wth.Order
 
 	if !order.ValidLuhnNumber() {
-		errorJSON(w, errNotValidLuhn, http.StatusUnprocessableEntity, ur.logger)
+		err = &models.AppError{Op: "handlersUser.Withdraw", Code: models.ErrOrderNumberLuhn}
+		errorJSON(w, err, ur.logger)
 		return
 	}
 
 	user.Login, err = user.GetLoginFromContext(r.Context())
 	if err != nil {
-		errorJSON(w, errNotValidLuhn, http.StatusUnauthorized, ur.logger)
+		errorJSON(w, err, ur.logger)
 		return
 	}
 
 	err = ur.userInteractor.Withdraw(ctx, wth, user)
 	if err != nil {
-		var stat int
-		if errors.Is(err, usecase.ErrNotEnoughMoney) {
-			stat = http.StatusPaymentRequired
-		} else {
-			stat = http.StatusInternalServerError
-		}
-		errorJSON(w, err, stat, ur.logger)
+		errorJSON(w, err, ur.logger)
 		return
 	}
 
@@ -164,7 +144,7 @@ func (ur *userRoutes) getWithdrawals(w http.ResponseWriter, r *http.Request) {
 
 	wth, err := ur.userInteractor.GetWithdrawals(ctx)
 	if err != nil {
-		errorJSON(w, err, http.StatusInternalServerError, ur.logger)
+		errorJSON(w, err, ur.logger)
 		return
 	}
 
@@ -173,7 +153,7 @@ func (ur *userRoutes) getWithdrawals(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, "application/json", wth, ur.logger)
+	writeJSON(w, http.StatusOK, wth, ur.logger)
 }
 
 func (ur *userRoutes) authorize(w http.ResponseWriter, user models.User) {
@@ -192,7 +172,7 @@ func (ur *userRoutes) authorize(w http.ResponseWriter, user models.User) {
 	// Create the JWT string
 	tokenStr, err := token.SignedString(ur.JWTkey)
 	if err != nil {
-		errorJSON(w, err, http.StatusInternalServerError, ur.logger)
+		errorJSON(w, err, ur.logger)
 		return
 	}
 

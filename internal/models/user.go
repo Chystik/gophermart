@@ -7,20 +7,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var (
-	ErrWrongCreds = errors.New("wrong password")
-)
-
 type User struct {
-	Login     string  `json:"login" db:"login"`
-	Password  string  `json:"password" db:"password"`
-	Balance   float64 `db:"balance"`
-	Withdrawn float64 `db:"withdrawn"`
+	Login     string `json:"login" db:"login"`
+	Password  string `json:"password" db:"password"`
+	Balance   Money  `db:"balance"`
+	Withdrawn Money  `db:"withdrawn"`
 }
 
 type Withdrawal struct {
 	Order       string      `json:"order" db:"order_id"`
-	Sum         float64     `json:"sum" db:"sum"`
+	Sum         Money       `json:"sum" db:"sum"`
 	ProcessedAt RFC3339Time `json:"processed_at" db:"processed_at"`
 }
 
@@ -37,8 +33,8 @@ func (u *User) SetPassword() error {
 func (u User) Authenticate(actual User) error {
 	err := bcrypt.CompareHashAndPassword([]byte(actual.Password), []byte(u.Password))
 	if err != nil {
-		if err == bcrypt.ErrMismatchedHashAndPassword {
-			return ErrWrongCreds
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return &AppError{Op: "user.Authenticate", Code: ErrUserCreds, Message: err.Error()}
 		}
 		return err
 	}
@@ -49,7 +45,7 @@ func (u User) Authenticate(actual User) error {
 func (u User) GetLoginFromContext(ctx context.Context) (string, error) {
 	claims, ok := ctx.Value(ClaimsKeyName).(*AuthClaims)
 	if !ok {
-		return "", errWrongAuthClaims
+		return "", &AppError{Op: "user.GetLoginFromContext", Code: ErrAuthClaims}
 	}
 
 	return claims.Login, nil

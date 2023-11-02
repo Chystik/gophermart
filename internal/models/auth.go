@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -13,10 +12,6 @@ const (
 	CookieName                = "token"
 	ClaimsKeyName   ClaimsKey = "props"
 	TokenExpiration           = 5 * time.Minute
-)
-
-var (
-	errWrongAuthClaims = errors.New("wrong auth claims")
 )
 
 type AuthClaims struct {

@@ -82,7 +82,7 @@ func App(cfg *config.App, quit chan os.Signal) {
 	orderInteractor := usecase.NewOrderInteractor(orderRepo, trManager)
 
 	// Syncer
-	syncer := syncer.NewSyncer(userRepo, orderRepo, accrualWebAPI, logger)
+	syncer := syncer.NewSyncer(userRepo, orderRepo, trManager, accrualWebAPI, logger)
 
 	// Router
 	handler := chi.NewRouter()
