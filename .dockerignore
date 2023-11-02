@@ -1,0 +1,6 @@
+# Logs
+*log
+
+# Binaries
+/cmd/gophermart/main
+/cmd/gophermart/gophermart

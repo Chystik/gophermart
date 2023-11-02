@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  db:
+    container_name: ${DB_PG_ENDPOINT}
+    image: postgres:14.4-alpine
+    hostname: ${DB_PG_ENDPOINT}
+    environment:
+      - POSTGRES_PASSWORD=${DB_PG_PASSWORD}
+      - POSTGRES_USER=${DB_PG_USER}
+    restart: unless-stopped
+    ports:
+      - ${DB_PG_PORT}:${DB_PG_PORT}
+    networks:
+      - db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  tests:
+    container_name: ${APP_NAME}-tests
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+      args:
+        BIN_PATH: /usr/local/bin
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - db
+
+networks:
+  db:
+
+volumes:
+  pg:
+    name: ${APP_NAME}-test-pg
