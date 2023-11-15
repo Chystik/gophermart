@@ -55,14 +55,18 @@ func (l *midLogger) WithLogging(next http.Handler) http.Handler {
 			ResponseWriter: w,
 			responseData:   responseData,
 		}
+		l.Info(
+			"request started",
+			zap.String("uri", r.RequestURI),
+			zap.String("method", r.Method),
+		)
+
 		next.ServeHTTP(&lw, r)
 
 		duration := time.Since(start)
 
 		l.Info(
-			"request started",
-			zap.String("uri", r.RequestURI),
-			zap.String("method", r.Method),
+			"response completed",
 			zap.Int("status", responseData.status),
 			zap.Duration("duration", duration),
 			zap.Int("size", responseData.size),

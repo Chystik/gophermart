@@ -17,15 +17,14 @@ import (
 	"github.com/Chystik/gophermart/pkg/httpserver"
 	"github.com/Chystik/gophermart/pkg/logger"
 	"github.com/Chystik/gophermart/pkg/postgres"
+	"github.com/Chystik/gophermart/pkg/transaction"
 
-	trmsqlx "github.com/avito-tech/go-transaction-manager/sqlx"
-	"github.com/avito-tech/go-transaction-manager/trm/manager"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 
 const (
-	defaultLogLevel        = "info"
+	defaultLogLevel        = "debug"
 	defaultShutdownTimeout = 5 * time.Second
 	accrualAddrScheme      = "http"
 
@@ -72,10 +71,12 @@ func App(cfg *config.App, quit chan os.Signal) {
 	accrualWebAPI := webapi.NewAccrualWebAPI(httpClient, webapi.Address(cfg.AccrualAddress.String()))
 
 	// Repository
-	trManager := manager.Must(trmsqlx.NewDefaultFactory(pg.DB))
-	userRepo := repository.NewUserRepository(pg.DB, trmsqlx.DefaultCtxGetter)
-	orderRepo := repository.NewOrderRepository(pg.DB, trmsqlx.DefaultCtxGetter)
-	withdrawalRepo := repository.NewWithdrawalRepository(pg.DB, trmsqlx.DefaultCtxGetter)
+	trManager := transaction.NewManager(pg.DB, logger)
+	trCtxGetter := transaction.NewCtxGetter()
+
+	userRepo := repository.NewUserRepository(pg.DB, trCtxGetter, logger)
+	orderRepo := repository.NewOrderRepository(pg.DB, trCtxGetter, logger)
+	withdrawalRepo := repository.NewWithdrawalRepository(pg.DB, trCtxGetter, logger)
 
 	// Interactor
 	userInteractor := usecase.NewUserInteractor(userRepo, withdrawalRepo, trManager)

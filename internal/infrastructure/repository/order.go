@@ -6,21 +6,25 @@ import (
 	"errors"
 
 	"github.com/Chystik/gophermart/internal/models"
+	"github.com/Chystik/gophermart/pkg/logger"
+	"github.com/Chystik/gophermart/pkg/transaction"
 
-	trmsqlx "github.com/avito-tech/go-transaction-manager/sqlx"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
 )
 
 type orderRepository struct {
 	*sqlx.DB
-	getter *trmsqlx.CtxGetter
+	getter transaction.CtxGetter
+	logger logger.AppLogger
 }
 
-func NewOrderRepository(db *sqlx.DB, getter *trmsqlx.CtxGetter) *orderRepository {
+func NewOrderRepository(db *sqlx.DB, getter transaction.CtxGetter, logger logger.AppLogger) *orderRepository {
 	return &orderRepository{
 		DB:     db,
 		getter: getter,
+		logger: logger,
 	}
 }
 
@@ -30,7 +34,9 @@ func (or *orderRepository) Create(ctx context.Context, order models.Order) error
 			VALUES (:number, :user_id, :status, :accrual, :uploaded_at)
 			ON CONFLICT (number) DO NOTHING`
 
-	_, err := sqlx.NamedExecContext(ctx, or.getter.DefaultTrOrDB(ctx, or.DB), query, order)
+	or.logger.Debug("OrderRepository.Create", zap.String("query", query))
+
+	_, err := sqlx.NamedExecContext(ctx, or.getter.GetTrxOrDB(ctx, or.DB), query, order)
 	if err != nil {
 		pgErr, ok := err.(*pgconn.PgError)
 		if !ok {
@@ -49,7 +55,9 @@ func (or *orderRepository) Get(ctx context.Context, order models.Order) (models.
 			FROM praktikum.order
 			WHERE number = $1`
 
-	err := sqlx.GetContext(ctx, or.getter.DefaultTrOrDB(ctx, or.DB), &order, query, order.Number)
+	or.logger.Debug("OrderRepository.Get", zap.String("query", query))
+
+	err := sqlx.GetContext(ctx, or.getter.GetTrxOrDB(ctx, or.DB), &order, query, order.Number)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return order, &models.AppError{Op: "orderRepository.Get", Code: models.ErrNotFound, Message: "order not found"}
@@ -70,7 +78,9 @@ func (or *orderRepository) GetList(ctx context.Context, login models.User) ([]mo
 			WHERE user_id = :login
 			ORDER BY uploaded_at ASC`
 
-	rows, err := sqlx.NamedQueryContext(ctx, or.getter.DefaultTrOrDB(ctx, or.DB), query, login)
+	or.logger.Debug("OrderRepository.GetList", zap.String("query", query))
+
+	rows, err := sqlx.NamedQueryContext(ctx, or.getter.GetTrxOrDB(ctx, or.DB), query, login)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +104,9 @@ func (or *orderRepository) Update(ctx context.Context, order models.Order) error
 			SET status = :status, accrual = :accrual
 			WHERE number = :number`
 
-	_, err := sqlx.NamedExecContext(ctx, or.getter.DefaultTrOrDB(ctx, or.DB), query, order)
+	or.logger.Debug("OrderRepository.Update", zap.String("query", query))
+
+	_, err := sqlx.NamedExecContext(ctx, or.getter.GetTrxOrDB(ctx, or.DB), query, order)
 
 	return err
 }
@@ -108,7 +120,9 @@ func (or *orderRepository) GetUnprocessed(ctx context.Context) ([]models.Order, 
 			FROM praktikum.order
 			WHERE status = ANY ($1)`
 
-	err := sqlx.SelectContext(ctx, or.getter.DefaultTrOrDB(ctx, or.DB), &orders, query, stat)
+	or.logger.Debug("OrderRepository.GetUnprocessed", zap.String("query", query))
+
+	err := sqlx.SelectContext(ctx, or.getter.GetTrxOrDB(ctx, or.DB), &orders, query, stat)
 	if err != nil {
 		return nil, err
 	}

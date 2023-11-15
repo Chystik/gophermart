@@ -6,21 +6,25 @@ import (
 	"errors"
 
 	"github.com/Chystik/gophermart/internal/models"
+	"github.com/Chystik/gophermart/pkg/logger"
+	"github.com/Chystik/gophermart/pkg/transaction"
 
-	trmsqlx "github.com/avito-tech/go-transaction-manager/sqlx"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
 )
 
 type userRepository struct {
 	*sqlx.DB
-	getter *trmsqlx.CtxGetter
+	getter transaction.CtxGetter
+	logger logger.AppLogger
 }
 
-func NewUserRepository(db *sqlx.DB, getter *trmsqlx.CtxGetter) *userRepository {
+func NewUserRepository(db *sqlx.DB, getter transaction.CtxGetter, logger logger.AppLogger) *userRepository {
 	return &userRepository{
 		DB:     db,
 		getter: getter,
+		logger: logger,
 	}
 }
 
@@ -29,7 +33,9 @@ func (ur *userRepository) Create(ctx context.Context, user models.User) error {
 			INSERT INTO	praktikum.user (login, password, balance, withdrawn)
 			VALUES (:login, :password, :balance, :withdrawn)`
 
-	_, err := sqlx.NamedExecContext(ctx, ur.getter.DefaultTrOrDB(ctx, ur.DB), query, user)
+	ur.logger.Debug("UserRepository.Create", zap.String("query", query))
+
+	_, err := sqlx.NamedExecContext(ctx, ur.getter.GetTrxOrDB(ctx, ur.DB), query, user)
 	if err != nil {
 		pgErr, ok := err.(*pgconn.PgError)
 		if !ok {
@@ -49,7 +55,9 @@ func (ur *userRepository) Get(ctx context.Context, user models.User) (models.Use
 			FROM praktikum.user
 			WHERE login = :login`
 
-	rows, err := sqlx.NamedQueryContext(ctx, ur.getter.DefaultTrOrDB(ctx, ur.DB), query, user)
+	ur.logger.Debug("UserRepository.Get", zap.String("query", query))
+
+	rows, err := sqlx.NamedQueryContext(ctx, ur.getter.GetTrxOrDB(ctx, ur.DB), query, user)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return user, &models.AppError{Op: "userRepository.Get", Code: models.ErrNotFound, Message: "user not found"}
@@ -78,7 +86,9 @@ func (ur *userRepository) Update(ctx context.Context, user models.User) error {
 			SET balance = :balance, withdrawn = :withdrawn
 			WHERE login = :login`
 
-	_, err := sqlx.NamedExecContext(ctx, ur.getter.DefaultTrOrDB(ctx, ur.DB), query, user)
+	ur.logger.Debug("UserRepository.Update", zap.String("query", query))
+
+	_, err := sqlx.NamedExecContext(ctx, ur.getter.GetTrxOrDB(ctx, ur.DB), query, user)
 
 	return err
 }

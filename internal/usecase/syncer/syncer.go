@@ -10,8 +10,7 @@ import (
 	"github.com/Chystik/gophermart/internal/models"
 	"github.com/Chystik/gophermart/internal/usecase"
 	"github.com/Chystik/gophermart/pkg/logger"
-
-	"github.com/avito-tech/go-transaction-manager/trm"
+	"github.com/Chystik/gophermart/pkg/transaction"
 )
 
 const (
@@ -27,13 +26,13 @@ type syncer struct {
 	tick      time.Ticker
 	quit      chan struct{}
 	once      sync.Once
-	trm       trm.Manager
+	trm       transaction.TransactionManager
 }
 
 func NewSyncer(
 	ur usecase.UserRepository,
 	or usecase.OrderRepository,
-	trm trm.Manager,
+	trm transaction.TransactionManager,
 	acc usecase.AccrualWebAPI,
 	l logger.AppLogger,
 	opts ...Options) *syncer {
@@ -130,7 +129,7 @@ func (s *syncer) sync(ctx context.Context) error {
 
 			// if the new status is valid for accrual - change user balance
 			if newStatus == models.Processed {
-				err = s.trm.Do(ctx, func(ctx context.Context) error {
+				err = s.trm.WithTransaction(ctx, func(ctx context.Context) error {
 					user, err := s.userRepo.Get(ctx, models.User{Login: orders[i].User})
 					if err != nil {
 						s.logger.Error(err.Error())

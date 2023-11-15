@@ -6,15 +6,15 @@ import (
 	"time"
 
 	"github.com/Chystik/gophermart/internal/models"
-	"github.com/avito-tech/go-transaction-manager/trm"
+	"github.com/Chystik/gophermart/pkg/transaction"
 )
 
 type orderInteractor struct {
 	orderRepo OrderRepository
-	trm       trm.Manager
+	trm       transaction.TransactionManager
 }
 
-func NewOrderInteractor(or OrderRepository, trm trm.Manager) *orderInteractor {
+func NewOrderInteractor(or OrderRepository, trm transaction.TransactionManager) *orderInteractor {
 	return &orderInteractor{
 		orderRepo: or,
 		trm:       trm,
@@ -25,7 +25,7 @@ func (oi *orderInteractor) Create(ctx context.Context, order models.Order) error
 	var err error
 	var o models.Order
 
-	err = oi.trm.Do(ctx, func(ctx context.Context) error {
+	err = oi.trm.WithTransaction(ctx, func(ctx context.Context) error {
 		o, err = oi.orderRepo.Get(ctx, order)
 		if err != nil {
 			var target *models.AppError
@@ -50,7 +50,7 @@ func (oi *orderInteractor) GetList(ctx context.Context, login models.User) ([]mo
 	var o []models.Order
 	var err error
 
-	err = oi.trm.Do(ctx, func(ctx context.Context) error {
+	err = oi.trm.WithTransaction(ctx, func(ctx context.Context) error {
 		o, err = oi.orderRepo.GetList(ctx, login)
 		return err
 	})
